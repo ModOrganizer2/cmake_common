@@ -26,11 +26,14 @@ if(${create_translations})
 		qm_files
 		${CMAKE_SOURCE_DIR}/src ${additional_translations}
 		${CMAKE_SOURCE_DIR}/src/${CMAKE_PROJECT_NAME}_en.ts
-		#OPTIONS -silent
+		OPTIONS -silent
 	)
 endif()
 
-include_directories(${uibase_include_path} ${Boost_INCLUDE_DIRS} ${SPDLOG_ROOT}/include)
+include_directories(
+	${uibase_include_path}
+	${Boost_INCLUDE_DIRS}
+	${SPDLOG_ROOT}/include)
 
 link_directories(
 	${modorganizer_install_lib_path}
@@ -50,11 +53,11 @@ source_group(autogen REGULAR_EXPRESSION ".*\\cmake_pch.*")
 source_group(resources FILES ${rc_files} ${qrc_files})
 
 if(${project_type} STREQUAL "plugin")
-	include(c:/tmp/cmake_common/plugin.cmake)
+	include(${CMAKE_CURRENT_LIST_DIR}/plugin.cmake)
 elseif(${project_type} STREQUAL "dll")
-	include(c:/tmp/cmake_common/dll.cmake)
+	include(${CMAKE_CURRENT_LIST_DIR}/dll.cmake)
 elseif(${project_type} STREQUAL "exe")
-	include(c:/tmp/cmake_common/exe.cmake)
+	include(${CMAKE_CURRENT_LIST_DIR}/exe.cmake)
 else()
 	message(FATAL_ERROR "unknown project type '${project_type}'")
 endif()

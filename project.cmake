@@ -27,41 +27,27 @@ if(NOT DEFINED additional_translations)
 endif()
 
 
-#temp
-set(QT_ROOT "C:/dev/qt/5.14.1/msvc2017_64")
-set(LZ4_ROOT "C:/dev/projects/modorganizer/build/lz4-v1.9.2")
-set(FMT_ROOT "C:/dev/projects/modorganizer/build/fmt-6.1.2")
-set(ZLIB_ROOT "C:/dev/projects/modorganizer/build/zlib-1.2.11")
-set(BOOST_ROOT "C:/dev/projects/modorganizer/build/boost_1_72_0")
-set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib64-msvc-14.2/lib")
-set(SPDLOG_ROOT "C:/dev/projects/modorganizer/build/spdlog-v1.4.2")
 set(COMPILE_FLAGS "/std:c++latest /permissive- /MP")
 set(OPTIMIZE_COMPILE_FLAGS "/O2")
 set(OPTIMIZE_LINK_FLAGS "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
-set(CMAKE_INSTALL_PREFIX "C:/dev/projects/modorganizer/install")
 
 if (${enable_warnings})
 	set(COMPILE_FLAGS "${COMPILE_FLAGS} /Wall /wd4464")
 endif()
 
-required_variable(QT_ROOT)
-required_variable(LZ4_ROOT)
-required_variable(FMT_ROOT)
-required_variable(ZLIB_ROOT)
 required_variable(BOOST_ROOT)
 required_variable(BOOST_LIBRARYDIR)
+required_variable(QT_ROOT)
+required_variable(FMT_ROOT)
 required_variable(SPDLOG_ROOT)
-
-required_variable(COMPILE_FLAGS)
-required_variable(OPTIMIZE_COMPILE_FLAGS)
-required_variable(OPTIMIZE_LINK_FLAGS)
+required_variable(LZ4_ROOT)
+required_variable(ZLIB_ROOT)
 required_variable(CMAKE_INSTALL_PREFIX)
 
-
-get_real_path(modorganizer_build_path ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+get_real_path(modorganizer_build_path "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 get_real_path(modorganizer_super_path "${modorganizer_build_path}/modorganizer_super")
-get_real_path(uibase_path ${modorganizer_super_path}/uibase)
-get_real_path(uibase_include_path ${uibase_path}/src)
+get_real_path(uibase_path "${modorganizer_super_path}/uibase")
+get_real_path(uibase_include_path "${uibase_path}/src")
 get_real_path(modorganizer_install_path "${modorganizer_super_path}/../../install")
 get_real_path(modorganizer_install_lib_path "${modorganizer_install_path}/libs")
 
