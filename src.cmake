@@ -30,11 +30,6 @@ if(${create_translations})
 	)
 endif()
 
-include_directories(
-	${uibase_include_path}
-	${Boost_INCLUDE_DIRS}
-	${SPDLOG_ROOT}/include)
-
 link_directories(
 	${modorganizer_install_lib_path}
 	${Boost_LIBRARY_DIRS}
@@ -46,11 +41,6 @@ set(input_files
 	${source_files} ${header_files} ${qm_files} ${qrc_files}
 	${rc_files} ${misc_files})
 
-source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
-source_group(cmake FILES CMakeLists.txt)
-source_group(autogen FILES ${rule_files} ${qm_files})
-source_group(autogen REGULAR_EXPRESSION ".*\\cmake_pch.*")
-source_group(resources FILES ${rc_files} ${qrc_files})
 
 if(${project_type} STREQUAL "plugin")
 	include(${CMAKE_CURRENT_LIST_DIR}/plugin.cmake)
@@ -62,14 +52,31 @@ else()
 	message(FATAL_ERROR "unknown project type '${project_type}'")
 endif()
 
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+	${uibase_include_path}
+	${Boost_INCLUDE_DIRS}
+	${SPDLOG_ROOT}/include)
+
+source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
+source_group(cmake FILES CMakeLists.txt)
+source_group(autogen FILES ${rule_files} ${qm_files})
+source_group(autogen REGULAR_EXPRESSION ".*\\cmake_pch.*")
+source_group(resources FILES ${rc_files} ${qrc_files})
+
 if(EXISTS ${CMAKE_SOURCE_DIR}/src/pch.h)
-	target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
-	#set(CMAKE_AUTOMOC_MOC_OPTIONS "-bpch.h")
+	target_precompile_headers(${CMAKE_PROJECT_NAME}
+		PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
 endif()
 
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS}")
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES COMPILE_FLAGS_RELWITHDEBINFO "${OPTIMIZE_COMPILE_FLAGS}")
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO "${OPTIMIZE_LINK_FLAGS}")
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+	COMPILE_FLAGS "${COMPILE_FLAGS}")
+
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+	COMPILE_FLAGS_RELWITHDEBINFO "${OPTIMIZE_COMPILE_FLAGS}")
+
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+	LINK_FLAGS_RELWITHDEBINFO "${OPTIMIZE_LINK_FLAGS}")
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
 	Qt5::Widgets
