@@ -154,17 +154,29 @@ function(requires_project)
 
 	foreach(project_name ${requires_UNPARSED_ARGUMENTS})
 		if(${project_name} STREQUAL "game_gamebryo")
-			set(src_dir "${modorganizer_super_path}/game_gamebryo/src/gamebryo")
+			set(src_dirs
+				"${modorganizer_super_path}/game_gamebryo/src/gamebryo"
+				"${modorganizer_super_path}/game_gamebryo/src/creation")
+
+			set(libs game_gamebryo game_creation)
 		else()
-			set(src_dir "${modorganizer_super_path}/${project_name}/src")
+			set(src_dirs "${modorganizer_super_path}/${project_name}/src")
+			set(libs ${project_name})
 		endif()
 
-		target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${src_dir})
+		target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${src_dirs})
 
-		file(GLOB_RECURSE source_files "${src_dir}/*.cpp")
+		set(has_source_files FALSE)
+		foreach(src_dir ${src_dirs})
+			file(GLOB_RECURSE source_files "${src_dir}/*.cpp")
+			if(NOT "X${source_files}" STREQUAL "X")
+				set(has_source_files TRUE)
+				break()
+			endif()
+		endforeach()
 
-		if(NOT "X${source_files}" STREQUAL "X")
-			target_link_libraries(${CMAKE_PROJECT_NAME} ${project_name})
+		if(${has_source_files})
+			target_link_libraries(${CMAKE_PROJECT_NAME} ${libs})
 		endif()
 	endforeach()
 endfunction()
