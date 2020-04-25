@@ -15,7 +15,11 @@ endfunction()
 
 
 if(NOT DEFINED enable_warnings)
-	set(enable_warnings OFF)
+	set(enable_warnings ON)
+endif()
+
+if(NOT DEFINED enable_permissive)
+	set(enable_permissive OFF)
 endif()
 
 if(NOT DEFINED create_translations)
@@ -27,12 +31,16 @@ if(NOT DEFINED additional_translations)
 endif()
 
 
-set(COMPILE_FLAGS "/std:c++latest /permissive- /MP")
+set(COMPILE_FLAGS "/std:c++latest /MP")
 set(OPTIMIZE_COMPILE_FLAGS "/O2")
 set(OPTIMIZE_LINK_FLAGS "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 
-if (${enable_warnings})
+if(${enable_warnings})
 	set(COMPILE_FLAGS "${COMPILE_FLAGS} /Wall /wd4464")
+endif()
+
+if(NOT ${enable_permissive})
+	set(COMPILE_FLAGS "${COMPILE_FLAGS} /permissive-")
 endif()
 
 required_variable(BOOST_ROOT)
@@ -42,6 +50,7 @@ required_variable(FMT_ROOT)
 required_variable(SPDLOG_ROOT)
 required_variable(LZ4_ROOT)
 required_variable(ZLIB_ROOT)
+required_variable(SEVENZ_ROOT)
 required_variable(CMAKE_INSTALL_PREFIX)
 
 get_real_path(modorganizer_build_path "${CMAKE_CURRENT_SOURCE_DIR}/../..")
@@ -51,54 +60,27 @@ get_real_path(uibase_include_path "${uibase_path}/src")
 get_real_path(modorganizer_install_path "${modorganizer_super_path}/../../install")
 get_real_path(modorganizer_install_lib_path "${modorganizer_install_path}/libs")
 
-set(Boost_USE_STATIC_RUNTIME OFF)
+list(APPEND CMAKE_PREFIX_PATH
+	${QT_ROOT}/lib/cmake
+	${LZ4_ROOT}/dll
+	${FMT_ROOT}/build
+	${BOOST_ROOT}/build)
 
-list(APPEND CMAKE_PREFIX_PATH ${QT_ROOT}/lib/cmake)
-list(APPEND CMAKE_PREFIX_PATH ${LZ4_ROOT}/dll)
-list(APPEND CMAKE_PREFIX_PATH ${FMT_ROOT}/build)
-list(APPEND CMAKE_PREFIX_PATH ${BOOST_ROOT}/build)
 
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5QuickWidgets REQUIRED)
-find_package(Qt5Quick REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5WinExtras REQUIRED)
-find_package(Qt5WebEngineWidgets REQUIRED)
-find_package(Qt5WebSockets REQUIRED)
-find_package(Qt5Qml REQUIRED)
-find_package(Qt5LinguistTools)
-find_package(zlib REQUIRED)
-find_package(Boost REQUIRED COMPONENTS thread)
-find_package(fmt REQUIRED)
+if(${project_type} STREQUAL "plugin")
+	include(${CMAKE_CURRENT_LIST_DIR}/plugin.cmake)
+elseif(${project_type} STREQUAL "dll")
+	include(${CMAKE_CURRENT_LIST_DIR}/dll.cmake)
+elseif(${project_type} STREQUAL "lib")
+	include(${CMAKE_CURRENT_LIST_DIR}/lib.cmake)
+elseif(${project_type} STREQUAL "exe")
+	include(${CMAKE_CURRENT_LIST_DIR}/exe.cmake)
+elseif(${project_type} STREQUAL "python_plugin")
+	include(${CMAKE_CURRENT_LIST_DIR}/python_plugin.cmake)
+else()
+	message(FATAL_ERROR "unknown project type '${project_type}'")
+endif()
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP autogen)
-set_property(GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP autogen)
-set_property(GLOBAL PROPERTY AUTORCC_SOURCE_GROUP autogen)
 
-set(CMAKE_AUTOMOC on)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
+do_project()
 
-execute_process(
-  COMMAND git log -1 --format=%h
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_COMMIT_HASH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-add_compile_definitions(
-	_UNICODE
-	UNICODE
-	NOMINMAX
-	_CRT_SECURE_NO_WARNINGS
-	BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE
-	_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-	QT_MESSAGELOGCONTEXT
-	GITID="${GIT_COMMIT_HASH}")
-
-set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
-set(CMAKE_INSTALL_MESSAGE NEVER)
-
-set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY
-	VS_STARTUP_PROJECT ${CMAKE_PROJECT_NAME})

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+include(${CMAKE_CURRENT_LIST_DIR}/cpp.cmake)
 
 function(set_project_to_run_from_install)
 	set(vcxproj_user_file "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.vcxproj.user")
@@ -57,13 +58,24 @@ function(deploy_qt)
 endfunction()
 
 
-add_executable(${CMAKE_PROJECT_NAME} WIN32 ${input_files})
-set_project_to_run_from_install()
+macro(do_project)
+	do_cpp_project()
+endmacro()
 
-if(DEFINED executable_name)
-	set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
-		OUTPUT_NAME ${executable_name})
-endif()
 
-install(TARGETS ${CMAKE_PROJECT_NAME} RUNTIME DESTINATION bin)
-install(FILES $<TARGET_PDB_FILE:${CMAKE_PROJECT_NAME}> DESTINATION pdb)
+macro(do_src)
+	cpp_pre_target()
+
+	add_executable(${CMAKE_PROJECT_NAME} WIN32 ${input_files})
+	set_project_to_run_from_install()
+
+	if(DEFINED executable_name)
+		set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+			OUTPUT_NAME ${executable_name})
+	endif()
+
+	cpp_post_target()
+
+	install(TARGETS ${CMAKE_PROJECT_NAME} RUNTIME DESTINATION bin)
+	install(FILES $<TARGET_PDB_FILE:${CMAKE_PROJECT_NAME}> DESTINATION pdb)
+endmacro()

@@ -9,14 +9,10 @@ endmacro()
 macro(do_src)
 	cpp_pre_target()
 
-	add_library(${CMAKE_PROJECT_NAME} SHARED ${input_files})
+	add_library(${CMAKE_PROJECT_NAME} STATIC ${input_files})
 
 	install(TARGETS ${CMAKE_PROJECT_NAME}
-			RUNTIME DESTINATION bin
 			ARCHIVE DESTINATION libs)
-
-	install(FILES $<TARGET_PDB_FILE:${CMAKE_PROJECT_NAME}>
-			DESTINATION pdb)
 
 	cpp_post_target()
 endmacro()
