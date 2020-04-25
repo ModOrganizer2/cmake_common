@@ -30,6 +30,11 @@ if(NOT DEFINED additional_translations)
 	set(additional_translations "")
 endif()
 
+if(NOT DEFINED run_elevated)
+	set(run_elevated OFF)
+endif()
+
+
 
 set(COMPILE_FLAGS "/std:c++latest /MP")
 set(OPTIMIZE_COMPILE_FLAGS "/O2")
@@ -48,12 +53,14 @@ required_variable(BOOST_LIBRARYDIR)
 required_variable(QT_ROOT)
 required_variable(FMT_ROOT)
 required_variable(SPDLOG_ROOT)
+required_variable(LOOT_PATH)
 required_variable(LZ4_ROOT)
 required_variable(ZLIB_ROOT)
+required_variable(PYTHON_ROOT)
 required_variable(SEVENZ_ROOT)
 required_variable(CMAKE_INSTALL_PREFIX)
 
-get_real_path(modorganizer_build_path "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+get_real_path(modorganizer_build_path "${CMAKE_CURRENT_LIST_DIR}/../..")
 get_real_path(modorganizer_super_path "${modorganizer_build_path}/modorganizer_super")
 get_real_path(uibase_path "${modorganizer_super_path}/uibase")
 get_real_path(uibase_include_path "${uibase_path}/src")

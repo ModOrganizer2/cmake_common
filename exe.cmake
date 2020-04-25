@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 include(${CMAKE_CURRENT_LIST_DIR}/cpp.cmake)
 
+if(NOT DEFINED install_dir)
+	set(install_dir bin)
+endif()
+
 function(set_project_to_run_from_install)
-	set(vcxproj_user_file "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.vcxproj.user")
-	get_target_property(output_name ${CMAKE_PROJECT_NAME} OUTPUT_NAME)
+	set(vcxproj_user_file "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.vcxproj.user")
+	get_target_property(output_name ${PROJECT_NAME} OUTPUT_NAME)
 
 	if(NOT EXISTS ${vcxproj_user_file})
 		file(WRITE ${vcxproj_user_file}
@@ -20,19 +24,24 @@ endfunction()
 
 
 function(deploy_qt)
-	cmake_parse_arguments(PARSE_ARGV 0 deploy_qt "" "" "BINARIES")
+	cmake_parse_arguments(PARSE_ARGV 0 deploy_qt "NOPLUGINS" "" "BINARIES")
 
 	set(qt5bin ${Qt5Core_DIR}/../../../bin)
 	find_program(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt5bin} NO_DEFAULT_PATH)
 
 	set(args
 		"--no-translations \
-		--plugindir qtplugins \
 		--verbose 0 \
 		--webenginewidgets \
 		--websockets \
 		--libdir dlls \
 		--no-compiler-runtime")
+
+	if(${deploy_qt_NOPLUGINS})
+		set(args "${args} --no-plugins")
+	else()
+		set(args "${args} --plugindir qtplugins")
+	endif()
 
 	set(bin "${CMAKE_INSTALL_PREFIX}/bin")
 
@@ -50,11 +59,16 @@ function(deploy_qt)
 		file(REMOVE_RECURSE ${bin}/platforms)
 		file(REMOVE_RECURSE ${bin}/styles)
 		file(REMOVE_RECURSE ${bin}/dlls/imageformats)
-		file(RENAME ${bin}/qtplugins/platforms ${bin}/platforms)
-		file(RENAME ${bin}/qtplugins/styles ${bin}/styles)
-		file(RENAME ${bin}/qtplugins/imageformats ${bin}/dlls/imageformats)
-		file(REMOVE_RECURSE ${bin}/qtplugins)
 	")
+
+	if(NOT ${deploy_qt_NOPLUGINS})
+		install(CODE "
+			file(RENAME ${bin}/qtplugins/platforms ${bin}/platforms)
+			file(RENAME ${bin}/qtplugins/styles ${bin}/styles)
+			file(RENAME ${bin}/qtplugins/imageformats ${bin}/dlls/imageformats)
+			file(REMOVE_RECURSE ${bin}/qtplugins)
+		")
+	endif()
 endfunction()
 
 
@@ -66,16 +80,16 @@ endmacro()
 macro(do_src)
 	cpp_pre_target()
 
-	add_executable(${CMAKE_PROJECT_NAME} WIN32 ${input_files})
+	add_executable(${PROJECT_NAME} WIN32 ${input_files})
 	set_project_to_run_from_install()
 
 	if(DEFINED executable_name)
-		set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+		set_target_properties(${PROJECT_NAME} PROPERTIES
 			OUTPUT_NAME ${executable_name})
 	endif()
 
 	cpp_post_target()
 
-	install(TARGETS ${CMAKE_PROJECT_NAME} RUNTIME DESTINATION bin)
-	install(FILES $<TARGET_PDB_FILE:${CMAKE_PROJECT_NAME}> DESTINATION pdb)
+	install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${install_dir})
+	install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION pdb)
 endmacro()

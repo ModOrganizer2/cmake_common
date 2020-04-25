@@ -7,7 +7,7 @@ macro(do_python_project)
 		pyqt5_create_translation(
 			qm_files
 			${CMAKE_SOURCE_DIR}/src ${additional_translations}
-			${CMAKE_SOURCE_DIR}/src/${CMAKE_PROJECT_NAME}_en.ts
+			${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
 		)
 	endif()
 

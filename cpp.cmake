@@ -42,7 +42,7 @@ macro(do_cpp_project)
 		GITID="${GIT_COMMIT_HASH}")
 
 	set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY
-		VS_STARTUP_PROJECT ${CMAKE_PROJECT_NAME})
+		VS_STARTUP_PROJECT ${PROJECT_NAME})
 endmacro()
 
 
@@ -51,7 +51,7 @@ macro(cpp_pre_target)
 		qt5_create_translation(
 			qm_files
 			${CMAKE_SOURCE_DIR}/src ${additional_translations}
-			${CMAKE_SOURCE_DIR}/src/${CMAKE_PROJECT_NAME}_en.ts
+			${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
 			OPTIONS -silent
 		)
 	endif()
@@ -78,15 +78,14 @@ macro(cpp_pre_target)
 		${Boost_LIBRARY_DIRS}
 		${LZ4_ROOT}/bin
 		${ZLIB_ROOT}/lib
+		${LOOT_PATH}
 	)
 endmacro()
 
 
 
 macro(cpp_post_target)
-	# this needs to happen after the include() above because they rely on the
-	# target being created
-	target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+	target_include_directories(${PROJECT_NAME} PRIVATE
 		${Boost_INCLUDE_DIRS}
 		${SPDLOG_ROOT}/include
 		${SEVENZ_ROOT}/CPP
@@ -101,20 +100,20 @@ macro(cpp_post_target)
 	source_group(resources FILES ${rc_files} ${qrc_files})
 
 	if(EXISTS ${CMAKE_SOURCE_DIR}/src/pch.h)
-		target_precompile_headers(${CMAKE_PROJECT_NAME}
+		target_precompile_headers(${PROJECT_NAME}
 			PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
 	endif()
 
-	set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+	set_target_properties(${PROJECT_NAME} PROPERTIES
 		COMPILE_FLAGS "${COMPILE_FLAGS}")
 
-	set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+	set_target_properties(${PROJECT_NAME} PROPERTIES
 		COMPILE_FLAGS_RELWITHDEBINFO "${OPTIMIZE_COMPILE_FLAGS}")
 
-	set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+	set_target_properties(${PROJECT_NAME} PROPERTIES
 		LINK_FLAGS_RELWITHDEBINFO "${OPTIMIZE_LINK_FLAGS}")
 
-	target_link_libraries(${CMAKE_PROJECT_NAME}
+	target_link_libraries(${PROJECT_NAME}
 		Qt5::Widgets
 		Qt5::WinExtras
 		Qt5::WebEngineWidgets
@@ -129,8 +128,13 @@ macro(cpp_post_target)
 		Dbghelp Version Shlwapi
 	)
 
-	if(NOT ${CMAKE_PROJECT_NAME} STREQUAL "uibase")
+	if(NOT ${PROJECT_NAME} STREQUAL "uibase")
 		requires_project("uibase")
+	endif()
+
+	if(${run_elevated})
+		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS
+			"/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
 	endif()
 endmacro()
 
@@ -152,19 +156,33 @@ endfunction()
 function(requires_project)
 	cmake_parse_arguments(PARSE_ARGV 0 requires "" "" "")
 
-	foreach(project_name ${requires_UNPARSED_ARGUMENTS})
-		if(${project_name} STREQUAL "game_gamebryo")
+	foreach(name ${requires_UNPARSED_ARGUMENTS})
+		if(${name} STREQUAL "game_gamebryo")
 			set(src_dirs
 				"${modorganizer_super_path}/game_gamebryo/src/gamebryo"
 				"${modorganizer_super_path}/game_gamebryo/src/creation")
 
-			set(libs game_gamebryo game_creation)
+			set(include_dirs ${src_dirs})
+			set(libs "")
+
+			if(NOT ${PROJECT_NAME} STREQUAL "game_gamebryo")
+				set(libs ${libs} game_gamebryo)
+			endif()
+
+			if(NOT ${PROJECT_NAME} STREQUAL "game_creation")
+				set(libs ${libs} game_creation)
+			endif()
+		elseif(${name} STREQUAL "usvfs")
+			set(src_dirs "${modorganizer_build_path}/usvfs/src")
+			set(include_dirs "${modorganizer_build_path}/usvfs/include")
+			set(libs "usvfs_x64")
 		else()
-			set(src_dirs "${modorganizer_super_path}/${project_name}/src")
-			set(libs ${project_name})
+			set(src_dirs "${modorganizer_super_path}/${name}/src")
+			set(include_dirs ${src_dirs})
+			set(libs ${name})
 		endif()
 
-		target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${src_dirs})
+		target_include_directories(${PROJECT_NAME} PRIVATE ${include_dirs})
 
 		set(has_source_files FALSE)
 		foreach(src_dir ${src_dirs})
@@ -176,7 +194,44 @@ function(requires_project)
 		endforeach()
 
 		if(${has_source_files})
-			target_link_libraries(${CMAKE_PROJECT_NAME} ${libs})
+			target_link_libraries(${PROJECT_NAME} ${libs})
 		endif()
 	endforeach()
 endfunction()
+
+
+function(requires_library)
+	cmake_parse_arguments(PARSE_ARGV 0 requires "" "" "")
+
+	foreach(name ${requires_UNPARSED_ARGUMENTS})
+		if(${name} STREQUAL "loot")
+			target_include_directories(${PROJECT_NAME} PRIVATE
+				${LOOT_PATH}/include)
+
+			target_link_libraries(${PROJECT_NAME} loot)
+		elseif(${name} STREQUAL "cpptoml")
+			include(ExternalProject)
+
+			ExternalProject_Add(
+				cpptoml
+				PREFIX "external"
+				URL "https://github.com/skystrife/cpptoml/archive/2051836a96a25e5a2d5283be7f633a157848f15e.tar.gz"
+				CONFIGURE_COMMAND ""
+				BUILD_COMMAND ""
+				INSTALL_COMMAND "")
+
+			ExternalProject_Get_Property(cpptoml SOURCE_DIR)
+
+			target_include_directories(${PROJECT_NAME} PRIVATE
+				"${SOURCE_DIR}/include")
+
+			add_dependencies(${PROJECT_NAME} cpptoml)
+		elseif(${name} STREQUAL "python")
+			target_include_directories(${PROJECT_NAME} PRIVATE
+				${PYTHON_ROOT}/Include)
+		else()
+			message(FATAL_ERROR "unknown library ${name}")
+		endif()
+	endforeach()
+endfunction()
+
