@@ -153,9 +153,18 @@ function(requires_project)
 	cmake_parse_arguments(PARSE_ARGV 0 requires "" "" "")
 
 	foreach(project_name ${requires_UNPARSED_ARGUMENTS})
-		target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-			${modorganizer_super_path}/${project_name}/src)
+		if(${project_name} STREQUAL "game_gamebryo")
+			set(src_dir "${modorganizer_super_path}/game_gamebryo/src/gamebryo")
+		else()
+			set(src_dir "${modorganizer_super_path}/${project_name}/src")
+		endif()
 
-		target_link_libraries(${CMAKE_PROJECT_NAME} ${project_name})
+		target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${src_dir})
+
+		file(GLOB_RECURSE source_files "${src_dir}/*.cpp")
+
+		if(NOT "X${source_files}" STREQUAL "X")
+			target_link_libraries(${CMAKE_PROJECT_NAME} ${project_name})
+		endif()
 	endforeach()
 endfunction()
