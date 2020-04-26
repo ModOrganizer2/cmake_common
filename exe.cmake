@@ -7,7 +7,11 @@ endif()
 
 function(set_project_to_run_from_install)
 	set(vcxproj_user_file "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.vcxproj.user")
+
 	get_target_property(output_name ${PROJECT_NAME} OUTPUT_NAME)
+	if("${output_name}" STREQUAL "output_name-NOTFOUND")
+		set(output_name ${PROJECT_NAME})
+	endif()
 
 	if(NOT EXISTS ${vcxproj_user_file})
 		file(WRITE ${vcxproj_user_file}
@@ -81,12 +85,13 @@ macro(do_src)
 	cpp_pre_target()
 
 	add_executable(${PROJECT_NAME} WIN32 ${input_files})
-	set_project_to_run_from_install()
 
 	if(DEFINED executable_name)
 		set_target_properties(${PROJECT_NAME} PROPERTIES
 			OUTPUT_NAME ${executable_name})
 	endif()
+
+	set_project_to_run_from_install()
 
 	cpp_post_target()
 

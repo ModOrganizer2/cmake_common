@@ -79,6 +79,7 @@ macro(cpp_pre_target)
 		${LZ4_ROOT}/bin
 		${ZLIB_ROOT}/lib
 		${LOOT_PATH}
+		${LIBBSARCH_ROOT}
 	)
 endmacro()
 
@@ -229,6 +230,11 @@ function(requires_library)
 		elseif(${name} STREQUAL "python")
 			target_include_directories(${PROJECT_NAME} PRIVATE
 				${PYTHON_ROOT}/Include)
+		elseif(${name} STREQUAL "libbsarch")
+			target_include_directories(${PROJECT_NAME} PRIVATE
+				${LIBBSARCH_ROOT})
+
+			target_link_libraries(${PROJECT_NAME} libbsarch libbsarch_OOP)
 		else()
 			message(FATAL_ERROR "unknown library ${name}")
 		endif()

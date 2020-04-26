@@ -58,6 +58,7 @@ required_variable(LZ4_ROOT)
 required_variable(ZLIB_ROOT)
 required_variable(PYTHON_ROOT)
 required_variable(SEVENZ_ROOT)
+required_variable(LIBBSARCH_ROOT)
 required_variable(CMAKE_INSTALL_PREFIX)
 
 get_real_path(modorganizer_build_path "${CMAKE_CURRENT_LIST_DIR}/../..")
