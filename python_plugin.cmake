@@ -95,5 +95,5 @@ macro(do_src)
 	install(
 		DIRECTORY ${data_dirs}
 		DESTINATION ${install_dir}/data
-		FILES_MATCHING PATTERN ".py")
+		FILES_MATCHING PATTERN "*.py")
 endmacro()

@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 include(${CMAKE_CURRENT_LIST_DIR}/cpp.cmake)
 
 if(NOT DEFINED install_dir)
-	set(install_dir bin)
+	if(${PROJECT_NAME} STREQUAL "uibase")
+		set(install_dir bin)
+	else()
+		set(install_dir bin/dlls)
+	endif()
 endif()
 
 macro(do_project)
