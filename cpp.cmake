@@ -159,9 +159,13 @@ function(requires_project)
 
 	foreach(name ${requires_UNPARSED_ARGUMENTS})
 		if(${name} STREQUAL "game_gamebryo")
-			set(src_dirs
-				"${modorganizer_super_path}/game_gamebryo/src/gamebryo"
-				"${modorganizer_super_path}/game_gamebryo/src/creation")
+		    if(${PROJECT_NAME} STREQUAL "game_creation")
+		        set(src_dirs "../gamebryo")
+            else()
+                set(src_dirs
+                    "${modorganizer_super_path}/game_gamebryo/src/gamebryo"
+    				"${modorganizer_super_path}/game_gamebryo/src/creation")
+            endif()
 
 			set(include_dirs ${src_dirs})
 			set(libs "")
