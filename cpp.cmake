@@ -80,6 +80,7 @@ macro(cpp_pre_target)
 		${ZLIB_ROOT}/lib
 		${LOOT_PATH}
 		${LIBBSARCH_ROOT}
+		${modorganizer_build_path}/googletest/build/lib
 	)
 endmacro()
 
@@ -231,6 +232,11 @@ function(requires_library)
 				"${SOURCE_DIR}/include")
 
 			add_dependencies(${PROJECT_NAME} cpptoml)
+		elseif(${name} STREQUAL "gtest")
+			target_include_directories(${PROJECT_NAME} PRIVATE
+				${modorganizer_build_path}/googletest/googletest/include)
+			target_link_libraries(${PROJECT_NAME} gtest)
+			target_link_libraries(${PROJECT_NAME} gtest_main)
 		elseif(${name} STREQUAL "python")
 			target_include_directories(${PROJECT_NAME} PRIVATE
 				${PYTHON_ROOT}/Include)
