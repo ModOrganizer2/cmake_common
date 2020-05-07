@@ -15,7 +15,7 @@ macro(do_cpp_project)
 	find_package(Qt5WebSockets REQUIRED)
 	find_package(Qt5Qml REQUIRED)
 	find_package(Qt5LinguistTools)
-	find_package(zlib REQUIRED)
+	find_package(ZLIB REQUIRED)
 	find_package(Boost REQUIRED COMPONENTS thread)
 	find_package(fmt REQUIRED)
 
