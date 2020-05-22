@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+include(${CMAKE_CURRENT_LIST_DIR}/functions.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cpp.cmake)
 
 if(NOT DEFINED install_dir)
@@ -13,7 +14,6 @@ macro(do_project)
 	do_cpp_project()
 endmacro()
 
-
 macro(do_src)
 	cpp_pre_target()
 
@@ -26,5 +26,6 @@ macro(do_src)
 	install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
 			DESTINATION pdb)
 
+	set_project_to_run_from_install(ModOrganizer.exe)
 	cpp_post_target()
 endmacro()
