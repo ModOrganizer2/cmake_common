@@ -10,7 +10,7 @@ function(set_project_to_run_from_install exec_name)
 				  <PropertyGroup>
 					<LocalDebuggerWorkingDirectory>${CMAKE_INSTALL_PREFIX}/bin</LocalDebuggerWorkingDirectory>
 					<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-					<LocalDebuggerCommand>${CMAKE_INSTALL_PREFIX}/bin/${exec_name}.exe</LocalDebuggerCommand>
+					<LocalDebuggerCommand>${CMAKE_INSTALL_PREFIX}/bin/${exec_name}</LocalDebuggerCommand>
 				  </PropertyGroup>
 				</Project>")
 	endif()

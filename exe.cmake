@@ -75,7 +75,7 @@ macro(do_src)
 		set(output_name ${PROJECT_NAME})
 	endif()
 
-	set_project_to_run_from_install(${output_name})
+	set_project_to_run_from_install(${output_name}.exe)
 
 	cpp_post_target()
 

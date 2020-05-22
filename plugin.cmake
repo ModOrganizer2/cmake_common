@@ -16,7 +16,7 @@ macro(do_src)
 	add_library(${PROJECT_NAME} SHARED ${input_files})
 	target_link_libraries(${PROJECT_NAME} uibase)
 
-	set_project_to_run_from_install(ModOrganizer)
+	set_project_to_run_from_install(ModOrganizer.exe)
 	cpp_post_target()
 
 	install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${install_dir})

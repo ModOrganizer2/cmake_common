@@ -26,6 +26,6 @@ macro(do_src)
 	install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
 			DESTINATION pdb)
 
-	set_project_to_run_from_install(ModOrganizer)
+	set_project_to_run_from_install(ModOrganizer.exe)
 	cpp_post_target()
 endmacro()
