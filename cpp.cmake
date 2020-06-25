@@ -234,8 +234,10 @@ function(requires_library)
 			add_dependencies(${PROJECT_NAME} cpptoml)
 		elseif(${name} STREQUAL "gtest")
 			target_include_directories(${PROJECT_NAME} PRIVATE
-				${modorganizer_build_path}/googletest/googletest/include)
+				${modorganizer_build_path}/googletest/googletest/include
+				${modorganizer_build_path}/googletest/googlemock/include)
 			target_link_libraries(${PROJECT_NAME} gtest)
+			target_link_libraries(${PROJECT_NAME} gmock)
 			target_link_libraries(${PROJECT_NAME} gtest_main)
 		elseif(${name} STREQUAL "python")
 			target_include_directories(${PROJECT_NAME} PRIVATE
