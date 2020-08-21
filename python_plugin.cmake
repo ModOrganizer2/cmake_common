@@ -55,6 +55,7 @@ macro(do_src)
 
 				execute_process(
 					COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+						-I
 						-m PyQt5.uic.pyuic
 						-o "${output}"
 						"${object}"
@@ -68,6 +69,7 @@ macro(do_src)
 
 				execute_process(
 					COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+						-I
 						-m PyQt5.pyrcc_main
 						-o "${output}"
 						"${object}"

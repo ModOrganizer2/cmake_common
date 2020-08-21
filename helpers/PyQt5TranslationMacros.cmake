@@ -77,7 +77,7 @@ function(PYQT5_CREATE_TRANSLATION _qm_files)
         endif()
         add_custom_command(OUTPUT ${_ts_file}
             COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-            ARGS -m PyQt5.pylupdate_main ${_lupdate_options} ${_lst_file_srcs} -ts ${_ts_file}
+            ARGS -I -m PyQt5.pylupdate_main ${_lupdate_options} ${_lst_file_srcs} -ts ${_ts_file}
             DEPENDS ${_lst_file_srcs}
             WORKING_DIRECTORY ${PYTHON_ROOT}
             VERBATIM)
