@@ -47,21 +47,22 @@ endmacro()
 
 
 macro(cpp_pre_target)
-	if(${create_translations})
-		qt5_create_translation(
-			qm_files
-			${CMAKE_SOURCE_DIR}/src ${additional_translations}
-			${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
-			OPTIONS -silent
-		)
-	endif()
-
 	file(GLOB_RECURSE source_files CONFIGURE_DEPENDS *.cpp)
 	file(GLOB_RECURSE header_files CONFIGURE_DEPENDS *.h)
 	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS *.qrc)
 	file(GLOB_RECURSE rc_files CONFIGURE_DEPENDS *.rc)
+	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS *.ui)
 	file(GLOB_RECURSE rule_files CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/*.rule)
 	file(GLOB_RECURSE misc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../*.natvis)
+
+	if(${create_translations})
+		qt5_create_translation(
+			qm_files
+			${source_files} ${header_files} ${ui_files} ${additional_translations}
+			${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
+			OPTIONS -silent
+		)
+	endif()
 
 	set(input_files
 		${source_files}
