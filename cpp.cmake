@@ -74,6 +74,13 @@ macro(cpp_pre_target)
 
 	# this needs to happen before the include() below because they're only used
 	# when creating the target
+	
+    if(DEFINED DEPENDENCIES_DIR)
+	    set(gtest_directory ${DEPENDENCIES_DIR}/googletest)
+    else()
+        set(gtest_directory ${modorganizer_build_path}/googletest)
+	endif()    
+
 	link_directories(
 		${modorganizer_install_lib_path}
 		${Boost_LIBRARY_DIRS}
@@ -81,7 +88,7 @@ macro(cpp_pre_target)
 		${ZLIB_ROOT}/lib
 		${LOOT_PATH}
 		${LIBBSARCH_ROOT}
-		${modorganizer_build_path}/googletest/build/lib
+		${gtest_directory}/build/lib
 	)
 endmacro()
 
@@ -234,9 +241,15 @@ function(requires_library)
 
 			add_dependencies(${PROJECT_NAME} cpptoml)
 		elseif(${name} STREQUAL "gtest")
-			target_include_directories(${PROJECT_NAME} PRIVATE
-				${modorganizer_build_path}/googletest/googletest/include
-				${modorganizer_build_path}/googletest/googlemock/include)
+            if(DEFINED DEPENDENCIES_DIR)
+                set(gtest_directory ${DEPENDENCIES_DIR}/googletest)
+            else()
+                set(gtest_directory ${modorganizer_build_path}/googletest)
+            endif()
+            target_include_directories(${PROJECT_NAME} PRIVATE
+                ${gtest_directory}/googletest/include
+                ${gtest_directory}/googletest/googlemock/include)
+                    
 			target_link_libraries(${PROJECT_NAME} gtest)
 			target_link_libraries(${PROJECT_NAME} gmock)
 			target_link_libraries(${PROJECT_NAME} gtest_main)
