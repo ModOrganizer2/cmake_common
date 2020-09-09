@@ -190,6 +190,25 @@ function(requires_project)
 			set(src_dirs "${modorganizer_build_path}/usvfs/src")
 			set(include_dirs "${modorganizer_build_path}/usvfs/include")
 			set(libs "usvfs_x64")
+        elseif(${name} STREQUAL "uibase")
+		    if(${PROJECT_NAME} STREQUAL "uibasetests")
+		        set(src_dirs "../src")
+            else()
+                set(src_dirs
+                    "${modorganizer_super_path}/uibase/src"
+    				"${modorganizer_super_path}/uibase/tests")
+            endif()
+
+			set(include_dirs ${src_dirs})
+			set(libs "")
+
+			if(NOT ${PROJECT_NAME} STREQUAL "uibasetests")
+				set(libs ${libs} uibase)
+			endif()
+
+			if(NOT ${PROJECT_NAME} STREQUAL "uibase")
+				set(libs ${libs} uibasetests)
+			endif()
 		else()
 			set(src_dirs "${modorganizer_super_path}/${name}/src")
 			set(include_dirs ${src_dirs})
