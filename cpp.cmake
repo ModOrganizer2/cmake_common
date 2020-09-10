@@ -259,7 +259,7 @@ function(requires_library)
             endif()
             target_include_directories(${PROJECT_NAME} PRIVATE
                 ${gtest_directory}/googletest/include
-                ${gtest_directory}/googletest/googlemock/include)
+                ${gtest_directory}/googlemock/include)
                     
 			target_link_libraries(${PROJECT_NAME} gtest)
 			target_link_libraries(${PROJECT_NAME} gmock)
