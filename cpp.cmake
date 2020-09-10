@@ -13,6 +13,7 @@ macro(do_cpp_project)
 	find_package(Qt5WinExtras REQUIRED)
 	find_package(Qt5WebEngineWidgets REQUIRED)
 	find_package(Qt5WebSockets REQUIRED)
+	find_package(Qt5Concurrent REQUIRED)
 	find_package(Qt5Qml REQUIRED)
 	find_package(Qt5LinguistTools)
 	find_package(ZLIB REQUIRED)
@@ -132,6 +133,7 @@ macro(cpp_post_target)
 		Qt5::QuickWidgets
 		Qt5::Network
 		Qt5::WebSockets
+		Qt5::Concurrent
 		fmt::fmt
 		liblz4 zlibstatic
 		${Boost_LIBRARIES}
