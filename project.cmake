@@ -30,6 +30,10 @@ if(NOT DEFINED enable_permissive)
 	set(enable_permissive OFF)
 endif()
 
+if(NOT DEFINED enable_cli)
+    set(enable_cli OFF)
+endif()
+
 if(NOT DEFINED create_translations)
 	set(create_translations ON)
 endif()
@@ -54,6 +58,10 @@ endif()
 
 if(NOT ${enable_permissive})
 	set(COMPILE_FLAGS "${COMPILE_FLAGS} /permissive-")
+endif()
+
+if(${enable_cli})
+    set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
 endif()
 
 required_variable(BOOST_ROOT PATH)
