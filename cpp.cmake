@@ -200,11 +200,7 @@ function(requires_project)
             endif()
 
 			set(include_dirs ${src_dirs})
-			set(libs "")
-
-			if(NOT ${PROJECT_NAME} STREQUAL "uibasetests")
-				set(libs ${libs} uibase)
-			endif()
+			set(libs "uibase")
 		else()
 			set(src_dirs "${modorganizer_super_path}/${name}/src")
 			set(include_dirs ${src_dirs})
