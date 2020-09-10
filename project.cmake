@@ -34,6 +34,10 @@ if(NOT DEFINED enable_cli)
     set(enable_cli OFF)
 endif()
 
+if(NOT DEFINED enable_bigobj)
+    set(enable_bigobj OFF)
+endif()
+
 if(NOT DEFINED create_translations)
 	set(create_translations ON)
 endif()
@@ -62,6 +66,10 @@ endif()
 
 if(${enable_cli})
     set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
+endif()
+
+if(${enable_bigobj})
+    set(COMPILE_FLAGS "${COMPILE_FLAGS} /bigobj")
 endif()
 
 required_variable(BOOST_ROOT PATH)
