@@ -66,6 +66,7 @@ endif()
 
 if(${enable_cli})
     set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
+    STRING(REPLACE "/EHs" "/EHa" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 endif()
 
 if(${enable_bigobj})
