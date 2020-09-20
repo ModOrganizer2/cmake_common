@@ -65,8 +65,13 @@ if(NOT ${enable_permissive})
 endif()
 
 if(${enable_cli})
-    set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
-    STRING(REPLACE "/EHs" "/EHa" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    if (CMAKE_GENERATOR MATCHES "Visual Studio")
+        set_target_properties(${PROJECT_NAME} PROPERTIES 
+	        COMMON_LANGUAGE_RUNTIME "")
+    else()
+        set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
+        string(REPLACE "/EHs" "/EHa" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    endif()
 endif()
 
 if(${enable_bigobj})
