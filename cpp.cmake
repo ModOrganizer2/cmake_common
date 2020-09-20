@@ -115,6 +115,16 @@ macro(cpp_post_target)
 			PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
 	endif()
 
+    if(${enable_cli})
+        if (CMAKE_GENERATOR MATCHES "Visual Studio")
+            set_target_properties(${PROJECT_NAME} PROPERTIES 
+                COMMON_LANGUAGE_RUNTIME "")
+        else()
+            set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
+            string(REPLACE "/EHs" "/EHa" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+        endif()
+    endif()
+
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		COMPILE_FLAGS "${COMPILE_FLAGS}")
 
