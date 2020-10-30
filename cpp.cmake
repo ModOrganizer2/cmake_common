@@ -48,11 +48,18 @@ endmacro()
 
 
 macro(cpp_pre_target)
+	if(DEFINED AUTOGEN_BUILD_DIR)
+		set(UI_HEADERS_DIR ${AUTOGEN_BUILD_DIR})
+	else()
+		set(UI_HEADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include_RelWithDebInfo)
+	endif()
+
 	file(GLOB_RECURSE source_files CONFIGURE_DEPENDS *.cpp)
 	file(GLOB_RECURSE header_files CONFIGURE_DEPENDS *.h)
 	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS *.qrc)
 	file(GLOB_RECURSE rc_files CONFIGURE_DEPENDS *.rc)
 	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS *.ui)
+	file(GLOB_RECURSE ui_header_files CONFIGURE_DEPENDS ${UI_HEADERS_DIR}/*.h)
 	file(GLOB_RECURSE rule_files CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/*.rule)
 	file(GLOB_RECURSE misc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../*.natvis)
 
@@ -68,6 +75,8 @@ macro(cpp_pre_target)
 	set(input_files
 		${source_files}
 		${header_files}
+		${ui_files}
+		${ui_header_files}
 		${qrc_files}
 		${rc_files}
 		${misc_files}
@@ -75,12 +84,12 @@ macro(cpp_pre_target)
 
 	# this needs to happen before the include() below because they're only used
 	# when creating the target
-	
+
     if(DEFINED DEPENDENCIES_DIR)
 	    set(gtest_directory ${DEPENDENCIES_DIR}/googletest)
     else()
         set(gtest_directory ${modorganizer_build_path}/googletest)
-	endif()    
+	endif()
 
 	link_directories(
 		${modorganizer_install_lib_path}
@@ -104,9 +113,10 @@ macro(cpp_post_target)
 		${LZ4_ROOT}/lib
 	)
 
-	source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
+	source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)")
+	source_group(ui REGULAR_EXPRESSION ".*\\.ui")
 	source_group(cmake FILES CMakeLists.txt)
-	source_group(autogen FILES ${rule_files} ${qm_files})
+	source_group(autogen FILES ${rule_files} ${qm_files} ${ui_header_files})
 	source_group(autogen REGULAR_EXPRESSION ".*\\cmake_pch.*")
 	source_group(resources FILES ${rc_files} ${qrc_files})
 
@@ -117,7 +127,7 @@ macro(cpp_post_target)
 
     if(${enable_cli})
         if (CMAKE_GENERATOR MATCHES "Visual Studio")
-            set_target_properties(${PROJECT_NAME} PROPERTIES 
+            set_target_properties(${PROJECT_NAME} PROPERTIES
                 COMMON_LANGUAGE_RUNTIME "")
         else()
             set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
@@ -167,7 +177,7 @@ function(add_filter)
 	set(files ${add_filter_FILES})
 
 	foreach(f ${add_filter_GROUPS})
-		set(files ${files} ${f}.cpp ${f}.h ${f}.inc ${f}.ui)
+		set(files ${files} ${f}.cpp ${f}.h ${f}.inc)
 	endforeach()
 
 	string(REPLACE "/" "\\" filter_name ${add_filter_NAME})
@@ -272,7 +282,7 @@ function(requires_library)
             target_include_directories(${PROJECT_NAME} PRIVATE
                 ${gtest_directory}/googletest/include
                 ${gtest_directory}/googlemock/include)
-                    
+
 			target_link_libraries(${PROJECT_NAME} gtest)
 			target_link_libraries(${PROJECT_NAME} gmock)
 			target_link_libraries(${PROJECT_NAME} gtest_main)
