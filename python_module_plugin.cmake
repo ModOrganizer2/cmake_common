@@ -10,20 +10,6 @@ macro(do_project)
 	do_python_project()
 endmacro()
 
-
-# sets `var` to TRUE if the given directory should be installed
-#
-function(is_interesting_python_dir var dir)
-	file(GLOB_RECURSE dir_content "${dir}/*.py")
-
-	if("X${dir_content}" STREQUAL "X")
-		set(${var} FALSE PARENT_SCOPE)
-	else()
-		set(${var} TRUE PARENT_SCOPE)
-	endif()
-endfunction()
-
-
 macro(do_src)
 	# this copies all the .py files into ${install_dir}/${PROJECT_NAME}
 
@@ -67,7 +53,6 @@ macro(do_src)
 	endforeach()
 
 	file(GLOB_RECURSE src_files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/*.py)
-	message(${src_files})
 
 	# # directories that go in bin/plugins/${name}
 	install(
