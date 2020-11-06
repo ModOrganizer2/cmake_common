@@ -4,7 +4,14 @@ macro(do_python_project)
 	find_package(Qt5LinguistTools)
 
 	if(${create_translations})
-		file(GLOB_RECURSE objects LIST_DIRECTORIES true ${CMAKE_SOURCE_DIR}/src/*)
+
+		if(EXISTS "${CMAKE_SOURCE_DIR}/__init__.py")
+			set(src_dir ${CMAKE_SOURCE_DIR})
+		else()
+			set(src_dir ${CMAKE_SOURCE_DIR}/src)
+		endif()
+
+		file(GLOB_RECURSE objects LIST_DIRECTORIES true ${src_dir}/*)
 
 		set(dirs "")
 		foreach(o ${objects})
@@ -15,8 +22,8 @@ macro(do_python_project)
 
 		pyqt5_create_translation(
 			qm_files
-			${CMAKE_SOURCE_DIR}/src ${dirs} ${additional_translations}
-			${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
+			${src_dir} ${dirs} ${additional_translations}
+			${src_dir}/${PROJECT_NAME}_en.ts
 		)
 	endif()
 
