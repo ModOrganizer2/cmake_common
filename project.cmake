@@ -107,10 +107,11 @@ elseif(${project_type} STREQUAL "tests")
 	include(${CMAKE_CURRENT_LIST_DIR}/tests.cmake)
 elseif(${project_type} STREQUAL "python_plugin")
 	include(${CMAKE_CURRENT_LIST_DIR}/python_plugin.cmake)
+elseif(${project_type} STREQUAL "python_module_plugin")
+	include(${CMAKE_CURRENT_LIST_DIR}/python_module_plugin.cmake)
 else()
 	message(FATAL_ERROR "unknown project type '${project_type}'")
 endif()
 
 
 do_project()
-
