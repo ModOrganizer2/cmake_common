@@ -27,6 +27,7 @@ function(deploy_qt)
 	endif()
 
 	set(bin "${CMAKE_INSTALL_PREFIX}/bin")
+	set(dlls "${bin}/dlls")
 
 	set(deploys "")
 	foreach(binary ${deploy_qt_BINARIES})
@@ -36,20 +37,20 @@ function(deploy_qt)
 				WORKING_DIRECTORY ${bin})")
 	endforeach()
 
-	install(CODE "
-		${deploys}
-
-		file(REMOVE_RECURSE ${bin}/platforms)
-		file(REMOVE_RECURSE ${bin}/styles)
-		file(REMOVE_RECURSE ${bin}/dlls/imageformats)
-	")
+	install(CODE "${deploys}")
 
 	if(NOT ${deploy_qt_NOPLUGINS})
 		install(CODE "
-			file(RENAME ${bin}/qtplugins/platforms ${bin}/platforms)
-			file(RENAME ${bin}/qtplugins/styles ${bin}/styles)
-			file(RENAME ${bin}/qtplugins/imageformats ${bin}/dlls/imageformats)
+			file(COPY ${bin}/qtplugins/imageformats DESTINATION ${dlls})
+			file(COPY ${bin}/qtplugins/platforms DESTINATION ${dlls})
+			file(COPY ${bin}/qtplugins/styles DESTINATION ${dlls})
+			file(COPY ${bin}/QtQuick.2 DESTINATION ${dlls})
+			file(COPY ${bin}/QtWebEngineProcess.exe DESTINATION ${bin}/resources)
+			file(COPY ${bin}/translations DESTINATION ${bin}/resources)
 			file(REMOVE_RECURSE ${bin}/qtplugins)
+			file(REMOVE_RECURSE ${bin}/QtQuick.2)
+			file(REMOVE_RECURSE ${bin}/QtWebEngineProcess.exe)
+			file(REMOVE_RECURSE ${bin}/translations)
 		")
 	endif()
 endfunction()
