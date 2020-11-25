@@ -18,16 +18,15 @@ macro(do_project)
 
 	# install requirements if there are any
 	if(EXISTS "${CMAKE_SOURCE_DIR}/plugin-requirements.txt")
-		add_custom_command(
-			OUTPUT "${CMAKE_SOURCE_DIR}/${lib_dir}/"
+		add_custom_target(libs ALL
 			COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-				-I
-				-m pip
-				install --force --disable-pip-version-check
-				--target="${CMAKE_SOURCE_DIR}/${lib_dir}"
-				-r "${CMAKE_SOURCE_DIR}/plugin-requirements.txt"
-			WORKING_DIRECTORY ${PYTHON_ROOT})
-		add_custom_target(libs ALL DEPENDS "${CMAKE_SOURCE_DIR}/${lib_dir}")
+					-I
+					-m pip
+					install --force --disable-pip-version-check
+					--target="${CMAKE_SOURCE_DIR}/${lib_dir}"
+					-r "${CMAKE_SOURCE_DIR}/plugin-requirements.txt"
+			WORKING_DIRECTORY ${PYTHON_ROOT}
+			DEPENDS "${CMAKE_SOURCE_DIR}/plugin-requirements.txt")
 	endif()
 endmacro()
 
