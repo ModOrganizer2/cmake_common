@@ -33,23 +33,23 @@ function(deploy_qt)
 		set(deploys "${deploys}
 			EXECUTE_PROCESS(
 				COMMAND ${qt5bin}/windeployqt.exe ${args} ${binary}
-				WORKING_DIRECTORY ${bin})")
+				WORKING_DIRECTORY \"${bin}\")")
 	endforeach()
 
 	install(CODE "
 		${deploys}
 
-		file(REMOVE_RECURSE ${bin}/platforms)
-		file(REMOVE_RECURSE ${bin}/styles)
-		file(REMOVE_RECURSE ${bin}/dlls/imageformats)
+		file(REMOVE_RECURSE \"${bin}/platforms\")
+		file(REMOVE_RECURSE \"${bin}/styles\")
+		file(REMOVE_RECURSE \"${bin}/dlls/imageformats\")
 	")
 
 	if(NOT ${deploy_qt_NOPLUGINS})
 		install(CODE "
-			file(RENAME ${bin}/qtplugins/platforms ${bin}/platforms)
-			file(RENAME ${bin}/qtplugins/styles ${bin}/styles)
-			file(RENAME ${bin}/qtplugins/imageformats ${bin}/dlls/imageformats)
-			file(REMOVE_RECURSE ${bin}/qtplugins)
+			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
+			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/styles\")
+			file(RENAME \"${bin}/qtplugins/imageformats\" \"${bin}/dlls/imageformats\")
+			file(REMOVE_RECURSE \"${bin}/qtplugins\")
 		")
 	endif()
 endfunction()
