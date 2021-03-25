@@ -18,7 +18,8 @@ function(deploy_qt)
 		--webenginewidgets \
 		--websockets \
 		--libdir dlls \
-		--no-compiler-runtime")
+		--no-compiler-runtime"
+	)
 
 	if(${deploy_qt_NOPLUGINS})
 		set(args "${args} --no-plugins")
@@ -39,16 +40,20 @@ function(deploy_qt)
 	install(CODE "
 		${deploys}
 
-		file(REMOVE_RECURSE \"${bin}/platforms\")
-		file(REMOVE_RECURSE \"${bin}/styles\")
+		file(REMOVE_RECURSE \"${bin}/dlls/platforms\")
+		file(REMOVE_RECURSE \"${bin}/dlls/styles\")
 		file(REMOVE_RECURSE \"${bin}/dlls/imageformats\")
+		file(REMOVE_RECURSE \"${bin}/dlls/QtQuick.2\")
+		file(REMOVE_RECURSE \"${bin}/dlls/QtQml\")
 	")
 
 	if(NOT ${deploy_qt_NOPLUGINS})
 		install(CODE "
-			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
-			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/styles\")
+			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/dlls/platforms\")
+			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/dlls/styles\")
 			file(RENAME \"${bin}/qtplugins/imageformats\" \"${bin}/dlls/imageformats\")
+			file(RENAME \"${bin}/QtQuick.2\" \"${bin}/dlls/QtQuick.2\")
+			file(RENAME \"${bin}/QtQml\" \"${bin}/dlls/QtQml\")
 			file(REMOVE_RECURSE \"${bin}/qtplugins\")
 		")
 	endif()
