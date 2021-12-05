@@ -56,26 +56,26 @@ macro(do_src)
 				execute_process(
 					COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
 						-I
-						-m PyQt5.uic.pyuic
+						-m PyQt6.uic.pyuic
 						-o "${output}"
 						"${object}"
 					WORKING_DIRECTORY ${PYTHON_ROOT})
 
 				list(APPEND data_files "${output}")
-			elseif("${ext}" STREQUAL ".qrc")
-				# process .qrc files and copy the resulting .py in data
-				get_filename_component(name "${object}" NAME_WLE)
-				set(output "${CMAKE_CURRENT_BINARY_DIR}/${name}_rc.py")
+#			elseif("${ext}" STREQUAL ".qrc")
+#				# process .qrc files and copy the resulting .py in data
+#				get_filename_component(name "${object}" NAME_WLE)
+#				set(output "${CMAKE_CURRENT_BINARY_DIR}/${name}_rc.py")
 
-				execute_process(
-					COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-						-I
-						-m PyQt5.pyrcc_main
-						-o "${output}"
-						"${object}"
-					WORKING_DIRECTORY ${PYTHON_ROOT})
+#				execute_process(
+#					COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+#						-I
+#						-m PyQt6.pyrcc_main
+#						-o "${output}"
+#						"${object}"
+#					WORKING_DIRECTORY ${PYTHON_ROOT})
 
-				list(APPEND data_files "${output}")
+#				list(APPEND data_files "${output}")
 			elseif("${ext}" STREQUAL ".json")
 				# copy .json files in data
 				list(APPEND data_files "${object}")

@@ -1,8 +1,8 @@
-# This is a modified version of Qt5LinguistToolsMacros.cmake which calls
-# pylupdate5 instead of lupdate, allowing Python strings to be extracted,
+# This is a modified version of Qt6LinguistToolsMacros.cmake which calls
+# pylupdate6 instead of lupdate, allowing Python strings to be extracted,
 # too. It still requires the Qt version of the file to be included, but
 # only this version of the function needs to be called. You also need to
-# have PYTHON_ROOT set to a directory where a working pylupdate5.bat can
+# have PYTHON_ROOT set to a directory where a working pylupdate6.bat can
 # be found. If you aren't using Windows, your platform's equivalent may
 # work, too.
 
@@ -40,7 +40,7 @@
 
 include(CMakeParseArguments)
 
-function(PYQT5_CREATE_TRANSLATION _qm_files)
+function(PYQT6_CREATE_TRANSLATION _qm_files)
     set(options)
     set(oneValueArgs)
     set(multiValueArgs OPTIONS)
@@ -63,8 +63,8 @@ function(PYQT5_CREATE_TRANSLATION _qm_files)
     foreach(_ts_file ${_my_tsfiles})
         set(_lst_file_srcs)
         if(_my_sources)
-          # Qt made a file listing all sources and used that as an argument, but pylupdate5 doesn't support that.
-          # Qt allowed directories to be listed as sources, but pylupdate5 requires their contents to be listed.
+          # Qt made a file listing all sources and used that as an argument, but pylupdate6 doesn't support that.
+          # Qt allowed directories to be listed as sources, but pylupdate6 requires their contents to be listed.
           get_filename_component(_ts_name ${_ts_file} NAME_WE)
           foreach(_lst_file_src ${_my_sources})
               if(IS_DIRECTORY ${_lst_file_src})
@@ -77,11 +77,11 @@ function(PYQT5_CREATE_TRANSLATION _qm_files)
         endif()
         add_custom_command(OUTPUT ${_ts_file}
             COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-            ARGS -I -m PyQt5.pylupdate_main ${_lupdate_options} ${_lst_file_srcs} -ts ${_ts_file}
+            ARGS -I -m PyQt6.lupdate.pylupdate ${_lupdate_options} --ts ${_ts_file} file ${_lst_file_srcs}
             DEPENDS ${_lst_file_srcs}
             WORKING_DIRECTORY ${PYTHON_ROOT}
             VERBATIM)
     endforeach()
-    qt5_add_translation(${_qm_files} ${_my_tsfiles})
+    qt_add_translation(${_qm_files} ${_my_tsfiles})
     set(${_qm_files} ${${_qm_files}} PARENT_SCOPE)
 endfunction()

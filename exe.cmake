@@ -9,7 +9,7 @@ endif()
 function(deploy_qt)
 	cmake_parse_arguments(PARSE_ARGV 0 deploy_qt "NOPLUGINS" "" "BINARIES")
 
-	set(qt5bin ${Qt5Core_DIR}/../../../bin)
+	set(qt5bin ${Qt6Core_DIR}/../../../bin)
 	find_program(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt5bin} NO_DEFAULT_PATH)
 
 	set(args

@@ -54,31 +54,34 @@ macro(do_src)
 			execute_process(
 				COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
 					-I
-					-m PyQt5.uic.pyuic
+					-m PyQt6.uic.pyuic
 					-o "${output}"
 					"${object}"
 				WORKING_DIRECTORY ${PYTHON_ROOT})
 
 			list(APPEND src_files "${output}")
-		elseif("${ext}" STREQUAL ".qrc")
-			# process .qrc files and copy the resulting .py in data
-			get_filename_component(name "${object}" NAME_WLE)
-			get_filename_component(folder "${object}" DIRECTORY)
-			set(output "${folder}/${name}.py")
+#		elseif("${ext}" STREQUAL ".qrc")
+#			# process .qrc files and copy the resulting .py in data
+#			get_filename_component(name "${object}" NAME_WLE)
+#			get_filename_component(folder "${object}" DIRECTORY)
+#			set(output "${folder}/${name}.py")
 
-			execute_process(
-				COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-					-I
-					-m PyQt5.pyrcc_main
-					-o "${output}"
-					"${object}"
-				WORKING_DIRECTORY ${PYTHON_ROOT})
+#			execute_process(
+#				COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+#					-I
+#					-m PyQt6.pyrcc_main
+#					-o "${output}"
+#					"${object}"
+#				WORKING_DIRECTORY ${PYTHON_ROOT})
 
 			list(APPEND src_files "${output}")
 		endif()
 	endforeach()
 
-	file(GLOB_RECURSE src_files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/*.py)
+	file(GLOB_RECURSE src_files RELATIVE ${src_dir} ${src_dir}/*.py)
+	
+	add_custom_target(${PROJECT_NAME})
+	target_sources(${PROJECT_NAME} PRIVATE ${src_dir}/${src_files})
 
 	# directories that go in bin/plugins/${name}
 	install(

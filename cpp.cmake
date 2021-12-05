@@ -6,16 +6,16 @@ macro(do_cpp_project)
 	set(CMAKE_AUTOUIC ON)
 	set(CMAKE_AUTORCC ON)
 
-	find_package(Qt5Widgets REQUIRED)
-	find_package(Qt5QuickWidgets REQUIRED)
-	find_package(Qt5Quick REQUIRED)
-	find_package(Qt5Network REQUIRED)
-	find_package(Qt5WinExtras REQUIRED)
-	find_package(Qt5WebEngineWidgets REQUIRED)
-	find_package(Qt5WebSockets REQUIRED)
-	find_package(Qt5Concurrent REQUIRED)
-	find_package(Qt5Qml REQUIRED)
-	find_package(Qt5LinguistTools)
+	find_package(Qt6 COMPONENTS Widgets REQUIRED)
+	find_package(Qt6 COMPONENTS QuickWidgets REQUIRED)
+	find_package(Qt6 COMPONENTS Quick REQUIRED)
+	find_package(Qt6 COMPONENTS Network REQUIRED)
+	find_package(Qt6 COMPONENTS WebEngineWidgets REQUIRED)
+	find_package(Qt6 COMPONENTS WebSockets REQUIRED)
+	find_package(Qt6 COMPONENTS Concurrent REQUIRED)
+	find_package(Qt6 COMPONENTS Qml REQUIRED)
+	find_package(Qt6 COMPONENTS Core5Compat REQUIRED)
+	find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
 	find_package(ZLIB REQUIRED)
 	find_package(Boost REQUIRED COMPONENTS thread)
 	find_package(fmt REQUIRED)
@@ -64,11 +64,11 @@ macro(cpp_pre_target)
 	file(GLOB_RECURSE misc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../*.natvis)
 
 	if(${create_translations})
-		qt5_create_translation(
-			qm_files
-			${source_files} ${header_files} ${ui_files} ${additional_translations}
-			${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
-			OPTIONS -silent
+		qt_add_lupdate(
+		    ${PROJECT_NAME} TS_FILES ${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
+			QM_FILES_OUTPUT_VARIABLE qm_files
+			SOURCES ${source_files} ${header_files} ${ui_files} ${additional_translations}
+			LUPDATE_OPTIONS -silent
 		)
 	endif()
 
@@ -145,15 +145,15 @@ macro(cpp_post_target)
 		LINK_FLAGS_RELWITHDEBINFO "${OPTIMIZE_LINK_FLAGS}")
 
 	target_link_libraries(${PROJECT_NAME}
-		Qt5::Widgets
-		Qt5::WinExtras
-		Qt5::WebEngineWidgets
-		Qt5::Quick
-		Qt5::Qml
-		Qt5::QuickWidgets
-		Qt5::Network
-		Qt5::WebSockets
-		Qt5::Concurrent
+		Qt::Widgets
+		Qt::WebEngineWidgets
+		Qt::Quick
+		Qt::Qml
+		Qt::QuickWidgets
+		Qt::Network
+		Qt::WebSockets
+		Qt::Concurrent
+		Qt6::Core5Compat
 		fmt::fmt
 		liblz4 zlibstatic
 		${Boost_LIBRARIES}
