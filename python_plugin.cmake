@@ -21,6 +21,18 @@ function(is_interesting_python_dir var dir)
 	else()
 		set(${var} TRUE PARENT_SCOPE)
 	endif()
+
+endfunction()
+
+
+# sets `var` to TRUE if resource directory
+#
+function(is_res_directory var dir)
+	if(${dir} STREQUAL "res")
+		set(${var} TRUE PARENT_SCOPE)
+    else()
+		set(${var} TRUE PARENT_SCOPE)
+    endif()
 endfunction()
 
 
@@ -42,6 +54,10 @@ macro(do_src)
 			if (${is_interesting})
 				list(APPEND data_dirs "${object}")
 			endif()
+			is_res_directory(is_res "${object}")
+			if (${is_res})
+			    list(APPEND res_dirs "${object}")
+            endif()
 		else()
 			get_filename_component(ext "${object}" LAST_EXT)
 
@@ -98,4 +114,9 @@ macro(do_src)
 		DIRECTORY ${data_dirs}
 		DESTINATION ${install_dir}/data
 		FILES_MATCHING PATTERN "*.py")
+
+	# directories that go in bin/plugins/data/res
+	install(
+		DIRECTORY ${res_dirs}
+		DESTINATION ${install_dir}/data)
 endmacro()
