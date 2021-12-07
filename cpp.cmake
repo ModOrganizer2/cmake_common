@@ -14,7 +14,6 @@ macro(do_cpp_project)
 	find_package(Qt6 COMPONENTS WebSockets REQUIRED)
 	find_package(Qt6 COMPONENTS Concurrent REQUIRED)
 	find_package(Qt6 COMPONENTS Qml REQUIRED)
-	find_package(Qt6 COMPONENTS Core5Compat REQUIRED)
 	find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
 	find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
 	find_package(ZLIB REQUIRED)
@@ -154,7 +153,6 @@ macro(cpp_post_target)
 		Qt::Network
 		Qt::WebSockets
 		Qt::Concurrent
-		Qt6::Core5Compat
 		fmt::fmt
 		liblz4 zlibstatic
 		${Boost_LIBRARIES}
