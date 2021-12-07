@@ -40,48 +40,29 @@
 
 include(CMakeParseArguments)
 
-function(PYQT6_CREATE_TRANSLATION _qm_files)
+function(PYQT6_CREATE_TRANSLATION)
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs OPTIONS)
+    set(multiValueArgs SRCFILES TSFILES OPTIONS)
 
     cmake_parse_arguments(_LUPDATE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    set(_lupdate_files ${_LUPDATE_UNPARSED_ARGUMENTS})
+    set(_source_files ${_LUPDATE_SRCFILES})
     set(_lupdate_options ${_LUPDATE_OPTIONS})
+    set(_ts_files ${_LUPDATE_TSFILES})
+    
+    set(_ts_files_tagged "")
 
-    set(_my_sources)
-    set(_my_tsfiles)
-    foreach(_file ${_lupdate_files})
-        get_filename_component(_ext ${_file} EXT)
-        get_filename_component(_abs_FILE ${_file} ABSOLUTE)
-        if(_ext MATCHES "ts")
-            list(APPEND _my_tsfiles ${_abs_FILE})
-        else()
-            list(APPEND _my_sources ${_abs_FILE})
-        endif()
+    foreach(_ts_file ${_ts_files})
+        LIST(APPEND _ts_files_tagged "--ts")
+        LIST(APPEND _ts_files_tagged ${_ts_file})
     endforeach()
-    foreach(_ts_file ${_my_tsfiles})
-        set(_lst_file_srcs)
-        if(_my_sources)
-          # Qt made a file listing all sources and used that as an argument, but pylupdate6 doesn't support that.
-          # Qt allowed directories to be listed as sources, but pylupdate6 requires their contents to be listed.
-          get_filename_component(_ts_name ${_ts_file} NAME_WE)
-          foreach(_lst_file_src ${_my_sources})
-              if(IS_DIRECTORY ${_lst_file_src})
-                file(GLOB _directory_contents ${_lst_file_src}/*.py ${_lst_file_src}/*.ui)
-                list(APPEND _lst_file_srcs ${_directory_contents})
-              else()
-                list(APPEND _lst_file_srcs ${_lst_file_src})
-              endif()
-          endforeach()
-        endif()
-        add_custom_command(OUTPUT ${_ts_file}
-            COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-            ARGS -I -m PyQt6.lupdate.pylupdate ${_lupdate_options} --ts ${_ts_file} file ${_lst_file_srcs}
-            DEPENDS ${_lst_file_srcs}
-            WORKING_DIRECTORY ${PYTHON_ROOT}
-            VERBATIM)
-    endforeach()
-    qt_add_translation(${_qm_files} ${_my_tsfiles})
+    
+    list(JOIN _ts_files " --ts " _ts_file_string)
+    add_custom_command(TARGET "translations"
+        COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+        ARGS -I -m PyQt6.lupdate.pylupdate ${_lupdate_options} ${_ts_files_tagged} ${_source_files}
+        DEPENDS ${_source_files}
+        WORKING_DIRECTORY ${PYTHON_ROOT}
+        VERBATIM)
     set(${_qm_files} ${${_qm_files}} PARENT_SCOPE)
 endfunction()

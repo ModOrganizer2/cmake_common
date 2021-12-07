@@ -19,16 +19,16 @@ macro(do_python_project)
 				list(APPEND dirs ${o})
 			endif()
 		endforeach()
+		
+	    add_custom_target(translations)
 
 		pyqt6_create_translation(
-			qm_files
-			${src_dir} ${dirs} ${additional_translations}
-			${src_dir}/${PROJECT_NAME}_en.ts
+			SRCFILES "${src_dir}" "${dirs}" "${additional_translations}"
+			TSFILES ${src_dir}/${PROJECT_NAME}_en.ts
+			# OPTIONS "--verbose"
 		)
-		
-	    add_custom_target(translations ALL DEPENDS ${qm_files})
-	endif()
 
+	endif()
 
 	file(GLOB_RECURSE source_files CONFIGURE_DEPENDS *.py)
 

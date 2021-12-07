@@ -9,14 +9,15 @@ endif()
 function(deploy_qt)
 	cmake_parse_arguments(PARSE_ARGV 0 deploy_qt "NOPLUGINS" "" "BINARIES")
 
-	set(qt5bin ${Qt6Core_DIR}/../../../bin)
-	find_program(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt5bin} NO_DEFAULT_PATH)
+	set(qt6bin ${Qt6Core_DIR}/../../../bin)
+	find_program(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt6bin} NO_DEFAULT_PATH)
 
 	set(args
 		"--no-translations \
 		--verbose 0 \
 		--webenginewidgets \
 		--websockets \
+		--openglwidgets \
 		--libdir dlls \
 		--no-compiler-runtime")
 
@@ -32,7 +33,7 @@ function(deploy_qt)
 	foreach(binary ${deploy_qt_BINARIES})
 		set(deploys "${deploys}
 			EXECUTE_PROCESS(
-				COMMAND ${qt5bin}/windeployqt.exe ${args} ${binary}
+				COMMAND ${qt6bin}/windeployqt.exe ${args} ${binary}
 				WORKING_DIRECTORY \"${bin}\")")
 	endforeach()
 
