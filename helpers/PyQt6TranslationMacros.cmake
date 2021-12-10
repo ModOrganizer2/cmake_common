@@ -40,7 +40,7 @@
 
 include(CMakeParseArguments)
 
-function(PYQT6_CREATE_TRANSLATION)
+function(PYQT6_CREATE_TRANSLATION _qm_files)
     set(options)
     set(oneValueArgs)
     set(multiValueArgs SRCFILES TSFILES OPTIONS)
@@ -64,5 +64,8 @@ function(PYQT6_CREATE_TRANSLATION)
         DEPENDS ${_source_files}
         WORKING_DIRECTORY ${PYTHON_ROOT}
         VERBATIM)
+    qt_add_lrelease(translations
+        TS_FILES ${_ts_files}
+        QM_FILES_OUTPUT_VARIABLE _qm_files)
     set(${_qm_files} ${${_qm_files}} PARENT_SCOPE)
 endfunction()

@@ -1,6 +1,7 @@
 include(${CMAKE_CURRENT_LIST_DIR}/helpers/PyQt6TranslationMacros.cmake)
 
 macro(do_python_project)
+	find_package(Qt6 COMPONENTS Core REQUIRED)
 	find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
 
 	if(${create_translations})
@@ -19,10 +20,11 @@ macro(do_python_project)
 				list(APPEND dirs ${o})
 			endif()
 		endforeach()
-		
-	    add_custom_target(translations)
+
+	    add_custom_target(translations ALL DEPENDS ${qm_files})
 
 		pyqt6_create_translation(
+		    qm_files
 			SRCFILES "${src_dir}" "${dirs}" "${additional_translations}"
 			TSFILES ${src_dir}/${PROJECT_NAME}_en.ts
 			# OPTIONS "--verbose"

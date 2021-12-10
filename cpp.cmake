@@ -63,15 +63,6 @@ macro(cpp_pre_target)
 	file(GLOB_RECURSE rule_files CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/*.rule)
 	file(GLOB_RECURSE misc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../*.natvis)
 
-	if(${create_translations})
-		qt_add_lupdate(
-		    ${PROJECT_NAME} TS_FILES ${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
-			QM_FILES_OUTPUT_VARIABLE qm_files
-			SOURCES ${source_files} ${header_files} ${ui_files} ${additional_translations}
-			LUPDATE_OPTIONS -silent
-		)
-	endif()
-
 	set(input_files
 		${source_files}
 		${header_files}
@@ -158,6 +149,15 @@ macro(cpp_post_target)
 		${Boost_LIBRARIES}
 		Dbghelp Version Shlwapi
 	)
+
+	if(${create_translations})
+		qt_add_translations(
+		    ${PROJECT_NAME} TS_FILES ${CMAKE_SOURCE_DIR}/src/${PROJECT_NAME}_en.ts
+			QM_FILES_OUTPUT_VARIABLE qm_files
+			SOURCES ${source_files} ${header_files} ${ui_files} ${additional_translations}
+			LUPDATE_OPTIONS -silent
+		)
+	endif()
 
 	if(NOT ${PROJECT_NAME} STREQUAL "uibase")
 		requires_project("uibase")
