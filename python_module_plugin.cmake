@@ -65,8 +65,12 @@ macro(do_src)
 
 	file(GLOB_RECURSE src_files RELATIVE ${src_dir} ${src_dir}/*.py)
 	
+	source_group(TREE ${src_dir}
+	    PREFIX src
+	    FILES ${src_dir}/${src_files})
+	
 	add_custom_target(${PROJECT_NAME})
-	target_sources(${PROJECT_NAME} PRIVATE ${src_dir}/${src_files})
+	target_sources(${PROJECT_NAME} PRIVATE ${src_dir}/${src_files} ${CMAKE_SOURCE_DIR}/plugin-requirements.txt)
 
 	# directories that go in bin/plugins/${name}
 	install(

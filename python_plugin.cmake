@@ -45,7 +45,7 @@ macro(do_src)
 
 
 	# everything in the src directory
-	file(GLOB everything ${CMAKE_SOURCE_DIR}/src/*)
+	file(GLOB everything CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*)
 
 	foreach(object ${everything})
 		if(IS_DIRECTORY "${object}")
@@ -78,26 +78,29 @@ macro(do_src)
 					WORKING_DIRECTORY ${PYTHON_ROOT})
 
 				list(APPEND data_files "${output}")
-#			elseif("${ext}" STREQUAL ".qrc")
-#				# process .qrc files and copy the resulting .py in data
-#				get_filename_component(name "${object}" NAME_WLE)
-#				set(output "${CMAKE_CURRENT_BINARY_DIR}/${name}_rc.py")
-
-#				execute_process(
-#					COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-#						-I
-#						-m PyQt6.pyrcc_main
-#						-o "${output}"
-#						"${object}"
-#					WORKING_DIRECTORY ${PYTHON_ROOT})
-
-#				list(APPEND data_files "${output}")
 			elseif("${ext}" STREQUAL ".json")
 				# copy .json files in data
 				list(APPEND data_files "${object}")
 			endif()
 		endif()
 	endforeach()
+	
+	if(DEFINED data_dirs)
+	    file(GLOB_RECURSE data_src_files
+            CONFIGURE_DEPENDS
+            ${data_dirs}/*.py)
+    endif()
+    if(DEFINED res_dirs)
+	    file(GLOB_RECURSE res_src_files
+            CONFIGURE_DEPENDS
+            ${res_dirs}/*)
+    endif()
+	
+	source_group(TREE ${CMAKE_SOURCE_DIR}/src PREFIX src FILES ${src_files} ${res_src_files} ${data_src_files})
+	source_group(data FILES ${data_files})
+	
+	add_custom_target(${PROJECT_NAME})
+	target_sources(${PROJECT_NAME} PRIVATE ${src_files} ${data_files} ${data_src_files} ${res_src_files})
 
 	# files that go directly in bin/plugins
 	install(
