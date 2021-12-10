@@ -3,6 +3,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/helpers/PyQt6TranslationMacros.cmake)
 macro(do_python_project)
 	find_package(Qt6 COMPONENTS Core REQUIRED)
 	find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
+	set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
 
 	if(${create_translations})
 
