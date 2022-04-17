@@ -141,6 +141,12 @@ function(mo2_find_esptk)
     mo2_find_corelib(esptk)
 endfunction()
 
+#! mo2_find_githubpp : find and create a mo2::githubpp target
+#
+function(mo2_find_githubpp)
+    mo2_find_corelib(githubpp DEPENDS Qt::Core Qt::Network)
+endfunction()
+
 #! mo2_find_gamebryo : find and create a mo2::gamebryo target
 #
 function(mo2_find_gamebryo)

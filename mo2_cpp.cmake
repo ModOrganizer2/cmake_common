@@ -227,8 +227,20 @@ endfunction()
 # extra arguments are given to mo2_configure_target
 #
 function(mo2_configure_executable MO2_TARGET)
+	cmake_parse_arguments(MO2 "ELEVATED" "" "" ${ARGN})
+
 	mo2_configure_target(${MO2_TARGET} ${ARGN})
-	set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "executable")
+	set_target_properties(${MO2_TARGET}
+		PROPERTIES
+		WIN32_EXECUTABLE TRUE
+		MO2_TARGET_TYPE "executable")
+
+	if (${MO2_ELEVATED})
+		# does not work with target_link_options, so keeping it that way for now... this
+		# is not a very used option anyway
+		set_target_properties(${MO2_TARGET} PROPERTIES LINK_FLAGS
+			"/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
+	endif()
 endfunction()
 
 #! mo2_install_target : set install for a MO2 target
