@@ -92,7 +92,7 @@ function(mo2_configure_target MO2_TARGET)
 		qt5_create_translation(
 			qm_files
 			${source_files} ${header_files} ${ui_files} ${MO2_EXTRA_TRANSLATIONS}
-			${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_en.ts
+			${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts
 			OPTIONS -silent
 		)
 	endif()
@@ -213,7 +213,8 @@ function(mo2_configure_library MO2_TARGET)
 
 	get_target_property(TARGET_TYPE ${MO2_TARGET} TYPE)
 
-	target_include_directories(${MO2_TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+	target_include_directories(${MO2_TARGET}
+		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 	if (${TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
 		set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "library-static")
@@ -250,7 +251,6 @@ endfunction()
 function(mo2_install_target MO2_TARGET)
 	cmake_parse_arguments(MO2 "" "INSTALLDIR" "" ${ARGN})
 
-	mo2_set_if_not_defined(MO2_INSTALLDIR "bin")
 
 	get_target_property(MO2_TARGET_TYPE ${MO2_TARGET} MO2_TARGET_TYPE)
 
@@ -264,9 +264,11 @@ function(mo2_install_target MO2_TARGET)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-static")
 		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-shared")
-		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION bin/dlls)
+		mo2_set_if_not_defined(MO2_INSTALLDIR "bin/dlls")
+		install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
 		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "executable")
+		mo2_set_if_not_defined(MO2_INSTALLDIR "bin")
 		install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
 	else()
 		message(ERROR "unknown MO2 target type for target '${MO2_TARGET}', did you forget using mo2_configure_XXX?")

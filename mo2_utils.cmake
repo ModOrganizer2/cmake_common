@@ -108,4 +108,59 @@ function(mo2_find_qt_version VAR)
 	set(${VAR} ${${VAR}} CACHE STRING "Qt Version}")
 endfunction()
 
+#! mo2_deploy_qt : add commands to deploy Qt from the given binaries
+#
+# this function attach install() entries that deploy Qt for the given binaries
+#
+# \param:NOPLUGINS do not deploy Qt plugins
+# \param:BINARIES names of the binaries (in the install path) to deploy from
+#
+function(mo2_deploy_qt)
+	cmake_parse_arguments(DEPLOY "NOPLUGINS" "" "BINARIES" ${ARGN})
+
+	set(qtbin ${QT_ROOT}/bin)
+	find_program(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt5bin} NO_DEFAULT_PATH)
+
+	set(args
+		"--no-translations \
+		--verbose 0 \
+		--webenginewidgets \
+		--websockets \
+		--libdir dlls \
+		--no-compiler-runtime")
+
+	if(${DEPLOY_NOPLUGINS})
+		set(args "${args} --no-plugins")
+	else()
+		set(args "${args} --plugindir qtplugins")
+	endif()
+
+	set(bin "${CMAKE_INSTALL_PREFIX}/bin")
+
+	set(deploys "")
+	foreach(binary ${DEPLOY_BINARIES})
+		set(deploys "${deploys}
+			EXECUTE_PROCESS(
+				COMMAND ${WINDEPLOYQT_COMMAND} ${args} ${binary}
+				WORKING_DIRECTORY \"${bin}\")")
+	endforeach()
+
+	install(CODE "
+		${deploys}
+
+		file(REMOVE_RECURSE \"${bin}/platforms\")
+		file(REMOVE_RECURSE \"${bin}/styles\")
+		file(REMOVE_RECURSE \"${bin}/dlls/imageformats\")
+	")
+
+	if(NOT ${DEPLOY_NOPLUGINS})
+		install(CODE "
+			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
+			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/styles\")
+			file(RENAME \"${bin}/qtplugins/imageformats\" \"${bin}/dlls/imageformats\")
+			file(REMOVE_RECURSE \"${bin}/qtplugins\")
+		")
+	endif()
+endfunction()
+
 set(MO2_UTILS_DEFINED TRUE)
