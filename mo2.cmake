@@ -4,7 +4,7 @@ if (DEFINED MO2_INCLUDED)
 	return()
 endif()
 
-include(${CMAKE_CURRENT_LIST_DIR}/mo2_functions.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 # setup path for find_package(), etc.
 mo2_required_variable(NAME BOOST_ROOT TYPE PATH)
@@ -33,31 +33,23 @@ list(APPEND CMAKE_PREFIX_PATH
 	${BOOST_ROOT}/build
 	${MO2_BUILD_PATH}/googletest/build/lib/cmake/GTest)
 
+# we add the Qt DLL to the paths for some tools
 set(ENV{PATH} "${QT_ROOT}/bin;$ENV{PATH}")
 
-# some global variables to set - we need to find Qt for AUTOMOC, etc.
-find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
-
-# target for plugins to link to
-add_library(mo2-uibase IMPORTED SHARED)
-set_target_properties(mo2-uibase PROPERTIES
-	IMPORTED_IMPLIB ${MO2_INSTALL_LIBS_PATH}/uibase.lib)
-target_link_libraries(mo2-uibase
-	INTERFACE Qt5::Widgets Qt5::Network)
-target_include_directories(mo2-uibase INTERFACE ${MO2_UIBASE_PATH}/src)
-add_library(mo2::uibase ALIAS mo2-uibase)
+# custom property, used to keep track of the type of target
+define_property(TARGET PROPERTY MO2_TARGET_TYPE INHERITED)
 
 set(Boost_USE_STATIC_RUNTIME OFF)
+set(Boost_USE_STATIC_LIBS ON)
 set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
-set(CMAKE_INSTALL_MESSAGE NEVER)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP autogen)
 set_property(GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP autogen)
 set_property(GLOBAL PROPERTY AUTORCC_SOURCE_GROUP autogen)
+
+include(${CMAKE_CURRENT_LIST_DIR}/mo2_cpp.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/mo2_python.cmake)
 
 # mark as included
 set(MO2_DEFINED true)
