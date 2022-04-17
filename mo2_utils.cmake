@@ -118,8 +118,9 @@ endfunction()
 function(mo2_deploy_qt)
 	cmake_parse_arguments(DEPLOY "NOPLUGINS" "" "BINARIES" ${ARGN})
 
-	set(qtbin ${QT_ROOT}/bin)
-	find_program(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt5bin} NO_DEFAULT_PATH)
+	# find_program() does not work for whatever reason, just going for the whole
+	# name
+	set(windeployqt ${QT_ROOT}/bin/windeployqt.exe)
 
 	set(args
 		"--no-translations \
@@ -141,7 +142,7 @@ function(mo2_deploy_qt)
 	foreach(binary ${DEPLOY_BINARIES})
 		set(deploys "${deploys}
 			EXECUTE_PROCESS(
-				COMMAND ${WINDEPLOYQT_COMMAND} ${args} ${binary}
+				COMMAND ${windeployqt} ${args} ${binary}
 				WORKING_DIRECTORY \"${bin}\")")
 	endforeach()
 
