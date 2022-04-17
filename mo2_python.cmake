@@ -8,7 +8,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 function(mo2_python_translations MO2_TARGET)
     find_package(Qt5LinguistTools)
 
-    file(GLOB_RECURSE objects LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/*)
+    file(GLOB_RECURSE objects
+		CONFIGURE_DEPENDS LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/*)
 
     set(dirs "")
     foreach(o ${objects})
@@ -155,11 +156,11 @@ function(mo2_configure_python_module MO2_TARGET)
     endif()
 
 	# ui files
-	file(GLOB_RECURSE ui_files ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
+	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	mo2_python_uifiles(${MO2_TARGET} INPLACE FILES ${ui_files})
 
 	# qrc file
-	file(GLOB_RECURSE qrc_files ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
+	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
 	mo2_python_rcfiles(${MO2_TARGET} INPLACE FILES ${qrc_files})
 
     set(install_dir "${MO2_INSTALL_PATH}/bin/plugins/${MO2_TARGET}")
@@ -199,26 +200,26 @@ function(mo2_configure_python_simple MO2_TARGET)
 	#
 
 	# ui files
-	file(GLOB ui_files ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
+	file(GLOB ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	mo2_python_uifiles(${MO2_TARGET} FILES ${ui_files})
 
 	# qrc file
-	file(GLOB qrc_files ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
+	file(GLOB qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
 	mo2_python_rcfiles(${MO2_TARGET} FILES ${qrc_files})
 
 	# .py files directly in the directory
-	file(GLOB py_files ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
+	file(GLOB py_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
 
 	# .json files directly in the directory
-	file(GLOB json_files ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
+	file(GLOB json_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
 
 	# subfolder with Python files
 	set(data_dirs "")
-	file(GLOB everything ${CMAKE_CURRENT_SOURCE_DIR}/*)
+	file(GLOB everything CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*)
 	foreach(object ${everything})
 		if(IS_DIRECTORY "${object}")
 			# only copy interesting directories
-			file(GLOB_RECURSE dir_content "${dir}/*.py")
+			file(GLOB_RECURSE dir_content CONFIGURE_DEPENDS "${dir}/*.py")
 			if (dir_content)
 				list(APPEND data_dirs "${object}")
 			endif()
