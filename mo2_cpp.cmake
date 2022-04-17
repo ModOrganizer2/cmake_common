@@ -216,7 +216,7 @@ endfunction()
 # extra arguments are given to mo2_configure_target
 #
 function(mo2_configure_library MO2_TARGET)
-	mo2_configure_target(${MO2_TARGET} AUTOMOC OFF ${ARGN})
+	mo2_configure_target(${MO2_TARGET} AUTOMOC OFF TRANSLATIONS OFF ${ARGN})
 
 	get_target_property(TARGET_TYPE ${MO2_TARGET} TYPE)
 
