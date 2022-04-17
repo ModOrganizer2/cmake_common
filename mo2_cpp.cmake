@@ -77,17 +77,6 @@ function(mo2_configure_target MO2_TARGET)
 	file(GLOB_RECURSE rule_files CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/*.rule)
 	file(GLOB_RECURSE misc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../*.natvis)
 
-	target_sources(${MO2_TARGET}
-		PRIVATE
-		${source_files}
-		${header_files}
-		${ui_files}
-		${ui_header_files}
-		${qrc_files}
-		${rc_files}
-		${misc_files}
-		${qm_files})
-
 	source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)")
 	source_group(ui REGULAR_EXPRESSION ".*\\.ui")
 	source_group(cmake FILES CMakeLists.txt)
@@ -104,6 +93,17 @@ function(mo2_configure_target MO2_TARGET)
 			OPTIONS -silent
 		)
 	endif()
+
+	target_sources(${MO2_TARGET}
+		PRIVATE
+		${source_files}
+		${header_files}
+		${ui_files}
+		${ui_header_files}
+		${qrc_files}
+		${rc_files}
+		${misc_files}
+		${qm_files})
 
 	execute_process(
 	  COMMAND git log -1 --format=%h
