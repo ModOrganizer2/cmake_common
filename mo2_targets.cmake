@@ -110,8 +110,8 @@ function(mo2_find_corelib LIBRARY)
     if (TARGET ${LIBRARY})
         message(STATUS "Found existing ${LIBRARY} target, using it.")
 
-        add_library(mo2-bsatk ALIAS ${LIBRARY})
-        add_library(mo2::bsatk ALIAS ${LIBRARY})
+        add_library(mo2-${LIBRARY} ALIAS ${LIBRARY})
+        add_library(mo2::${LIBRARY} ALIAS ${LIBRARY})
     else()
         message(STATUS "Existing ${LIBRARY} target not found, creating it.")
 
@@ -139,6 +139,75 @@ endfunction()
 #
 function(mo2_find_esptk)
     mo2_find_corelib(esptk)
+endfunction()
+
+#! mo2_find_gamebryo : find and create a mo2::gamebryo target
+#
+function(mo2_find_gamebryo)
+
+    # this does not use mo2_find_corelib because the target name do not match (we
+    # want gamebryo, the target is game_gamebryo), and the src folder is not the same
+    # other lib (src/gamebryo instead of src/)
+
+    # target was already created
+    if (TARGET mo2-gamebryo)
+        return()
+    endif()
+
+    # if the target exists, we use it
+    if (TARGET game_gamebryo)
+        message(STATUS "Found existing game_gamebryo target, using it.")
+
+        add_library(mo2-gamebryo ALIAS game_gamebryo)
+        add_library(mo2::gamebryo ALIAS game_gamebryo)
+    else()
+        message(STATUS "Existing game_gamebryo target not found, creating it.")
+
+        add_library(mo2-gamebryo IMPORTED STATIC)
+        set_target_properties(mo2-gamebryo PROPERTIES
+            IMPORTED_LOCATION ${MO2_INSTALL_LIBS_PATH}/game_gamebryo.lib)
+        target_include_directories(mo2-gamebryo
+            INTERFACE ${MO2_SUPER_PATH}/game_gamebryo/src/gamebryo)
+
+        mo2_add_dependencies(mo2-gamebryo INTERFACE lz4)
+
+        add_library(mo2::gamebryo ALIAS mo2-gamebryo)
+    endif()
+
+endfunction()
+
+#! mo2_find_creation : find and create a mo2::creation target
+#
+function(mo2_find_creation)
+
+    # same as mo2_find_gamebryo, we do not use mo2_find_corelib (see mo2_find_gamebryo
+    # comment for why)
+
+    # target was already created
+    if (TARGET mo2-creation)
+        return()
+    endif()
+
+    # if the target exists, we use it
+    if (TARGET game_creation)
+        message(STATUS "Found existing game_creation target, using it.")
+
+        add_library(mo2-creation ALIAS game_creation)
+        add_library(mo2::creation ALIAS game_creation)
+    else()
+        message(STATUS "Existing game_creation target not found, creating it.")
+
+        add_library(mo2-creation IMPORTED STATIC)
+        set_target_properties(mo2-creation PROPERTIES
+            IMPORTED_LOCATION ${MO2_INSTALL_LIBS_PATH}/game_creation.lib)
+        target_include_directories(mo2-creation
+            INTERFACE ${MO2_SUPER_PATH}/game_gamebryo/src/creation)
+
+        add_library(mo2::creation ALIAS mo2-creation)
+
+        mo2_add_dependencies(mo2-creation INTERFACE gamebryo lz4)
+    endif()
+
 endfunction()
 
 #! mo2_find_loot : find and create a mo2::loot target
