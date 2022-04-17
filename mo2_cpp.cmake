@@ -44,9 +44,17 @@ function(mo2_configure_target MO2_TARGET)
 	endif()
 
 	target_compile_options(${MO2_TARGET}
-		PRIVATE "/std:c++latest" "/MP"
+		PRIVATE "/MP"
 		$<$<CONFIG:RelWithDebInfo>:/O2>
 	)
+
+	set(CXX_STANDARD 20)
+	if (${MO2_CLI})
+		set(CXX_STANDARD 17)
+	endif()
+	set_target_properties(${MO2_TARGET} PROPERTIES
+		CXX_STANDARD ${CXX_STANDARD}
+		CXX_EXTENSIONS OFF)
 
 	# VS emits a warning for LTCG, at least for uibase, so maybe not required?
 	target_link_options(${MO2_TARGET}
@@ -88,8 +96,17 @@ function(mo2_configure_target MO2_TARGET)
 	source_group(autogen REGULAR_EXPRESSION ".*\\cmake_pch.*")
 	source_group(resources FILES ${rc_files} ${qrc_files})
 
+
 	if(${MO2_TRANSLATIONS})
 		find_package(Qt5LinguistTools)
+
+		if (MO2_EXTRA_TRANSLATIONS)
+			file(GLOB_RECURSE MO2_EXTRA_TRANSLATIONS CONFIGURE_DEPENDS
+				${MO2_EXTRA_TRANSLATIONS}/*.cpp
+				${MO2_EXTRA_TRANSLATIONS}/*.h
+				${MO2_EXTRA_TRANSLATIONS}/*.ui)
+		endif()
+
 		qt5_create_translation(
 			qm_files
 			${source_files} ${header_files} ${ui_files} ${MO2_EXTRA_TRANSLATIONS}
