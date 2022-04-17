@@ -43,22 +43,25 @@ function(mo2_configure_target MO2_TARGET)
 			PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
 	endif()
 
-	set(COMPILE_FLAGS "/std:c++latest /MP")
-	set(OPTIMIZE_COMPILE_FLAGS "/O2")
+	target_compile_options(${MO2_TARGET} PRIVATE "/std:c++latest" "/MP")
+
+	set_target_properties(${MO2_TARGET} PROPERTIES
+		COMPILE_FLAGS_RELWITHDEBINFO "/O2")
 
 	# VS emits a warning for LTCG, at least for uibase, so maybe not required?
-	set(OPTIMIZE_LINK_FLAGS "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+	set_target_properties(${MO2_TARGET} PROPERTIES
+		LINK_FLAGS_RELWITHDEBINFO "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 
 	if(${MO2_WARNINGS})
-		set(COMPILE_FLAGS "${COMPILE_FLAGS} /Wall /wd4464")
+		target_compile_options(${MO2_TARGET} PRIVATE "/Wall" "/wd4464")
 	endif()
 
 	if(NOT ${MO2_PERMISSIVE})
-		set(COMPILE_FLAGS "${COMPILE_FLAGS} /permissive-")
+		target_compile_options(${MO2_TARGET} PRIVATE "/permissive-")
 	endif()
 
 	if(${MO2_BIGOBJ})
-		set(COMPILE_FLAGS "${COMPILE_FLAGS} /bigobj")
+		target_compile_options(${MO2_TARGET} PRIVATE "/bigobj")
 	endif()
 
 	# find source files
@@ -131,23 +134,15 @@ function(mo2_configure_target MO2_TARGET)
 
     if(${MO2_CLI})
         if (CMAKE_GENERATOR MATCHES "Visual Studio")
-            set_target_properties(${MO2_TARGET} PROPERTIES
-                COMMON_LANGUAGE_RUNTIME "")
+            set_target_properties(${MO2_TARGET} PROPERTIES COMMON_LANGUAGE_RUNTIME "")
         else()
+			# can this really happen?
             set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
             string(REPLACE "/EHs" "/EHa" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
         endif()
     endif()
 
-	set_target_properties(${MO2_TARGET} PROPERTIES
-		COMPILE_FLAGS "${COMPILE_FLAGS}"
-		VS_STARTUP_PROJECT ${PROJECT_NAME})
-
-	set_target_properties(${MO2_TARGET} PROPERTIES
-		COMPILE_FLAGS_RELWITHDEBINFO "${OPTIMIZE_COMPILE_FLAGS}")
-
-	set_target_properties(${MO2_TARGET} PROPERTIES
-		LINK_FLAGS_RELWITHDEBINFO "${OPTIMIZE_LINK_FLAGS}")
+	set_target_properties(${MO2_TARGET} PROPERTIES VS_STARTUP_PROJECT ${MO2_TARGET})
 
 	target_link_libraries(${MO2_TARGET} PRIVATE Version)
 
