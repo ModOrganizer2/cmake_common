@@ -144,7 +144,7 @@ function(mo2_configure_target MO2_TARGET)
 
 	set_target_properties(${MO2_TARGET} PROPERTIES VS_STARTUP_PROJECT ${MO2_TARGET})
 
-	target_link_libraries(${MO2_TARGET} PRIVATE Version)
+	target_link_libraries(${MO2_TARGET} PRIVATE Version Dbghelp)
 
 	if (MO2_PUBLIC_DEPENDS)
 		mo2_add_dependencies(${MO2_TARGET} PUBLIC ${MO2_PUBLIC_DEPENDS})
@@ -198,12 +198,10 @@ endfunction()
 # extra arguments are given to mo2_configure_target
 #
 function(mo2_configure_plugin MO2_TARGET)
-	mo2_find_uibase()
-
 	mo2_configure_target(${MO2_TARGET} ${ARGN})
-	set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "plugin")
+	mo2_add_dependencies(${MO2_TARGET} PRIVATE uibase)
 
-	target_link_libraries(${MO2_TARGET} PRIVATE mo2::uibase)
+	set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "plugin")
 endfunction()
 
 #! mo2_configure_library : configure a C++ library (NOT a plugin)
