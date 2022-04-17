@@ -43,14 +43,15 @@ function(mo2_configure_target MO2_TARGET)
 			PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
 	endif()
 
-	target_compile_options(${MO2_TARGET} PRIVATE "/std:c++latest" "/MP")
-
-	set_target_properties(${MO2_TARGET} PROPERTIES
-		COMPILE_FLAGS_RELWITHDEBINFO "/O2")
+	target_compile_options(${MO2_TARGET}
+		PRIVATE "/std:c++latest" "/MP"
+		$<$<CONFIG:RelWithDebInfo>:/O2>
+	)
 
 	# VS emits a warning for LTCG, at least for uibase, so maybe not required?
-	set_target_properties(${MO2_TARGET} PROPERTIES
-		LINK_FLAGS_RELWITHDEBINFO "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+	target_link_options(${MO2_TARGET}
+		PRIVATE
+		$<$<CONFIG:RelWithDebInfo>:/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF>)
 
 	if(${MO2_WARNINGS})
 		target_compile_options(${MO2_TARGET} PRIVATE "/Wall" "/wd4464")
