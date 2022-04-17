@@ -92,13 +92,13 @@ function(mo2_python_rcfiles MO2_TARGET)
 		get_filename_component(name "${RC_FILE}" NAME_WLE)
 		get_filename_component(folder "${RC_FILE}" DIRECTORY)
 		if (${MO2_INPLACE})
-			get_filename_component(folder "${UI_FILE}" DIRECTORY)
+			get_filename_component(folder "${RC_FILE}" DIRECTORY)
 		else()
 			set(folder "${CMAKE_CURRENT_BINARY_DIR}")
 		endif()
 
 
-		set(output "${folder}/${name}.py")
+		set(output "${folder}/${name}_rc.py")
 		add_custom_command(
 			OUTPUT "${output}"
 			COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
