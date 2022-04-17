@@ -95,6 +95,8 @@ function(mo2_configure_target MO2_TARGET)
 			${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts
 			OPTIONS -silent
 		)
+
+		install(FILES ${qm_files} DESTINATION bin/translations)
 	endif()
 
 	target_sources(${MO2_TARGET}
