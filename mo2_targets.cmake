@@ -141,10 +141,31 @@ function(mo2_find_esptk)
     mo2_find_corelib(esptk)
 endfunction()
 
+#! mo2_find_archive : find and create a mo2::archive target
+#
+function(mo2_find_archive)
+    mo2_find_corelib(archive)
+endfunction()
+
 #! mo2_find_githubpp : find and create a mo2::githubpp target
 #
 function(mo2_find_githubpp)
     mo2_find_corelib(githubpp DEPENDS Qt::Core Qt::Network)
+endfunction()
+
+#! mo2_find_lootcli : find and create a mo2::lootcli target
+#
+function(mo2_find_lootcli)
+
+    if (TARGET mo2-lootcli)
+        return()
+    endif()
+
+    add_library(mo2-lootcli IMPORTED INTERFACE)
+    target_include_directories(mo2-lootcli INTERFACE
+        ${MO2_SUPER_PATH}/lootcli/include)
+    add_library(mo2::lootcli ALIAS mo2-lootcli)
+
 endfunction()
 
 #! mo2_find_gamebryo : find and create a mo2::gamebryo target
@@ -271,9 +292,12 @@ function(mo2_find_zlib)
         return()
     endif()
 
-    find_package(ZLIB REQUIRED)
-    add_library(mo2-zlib ALIAS ZLIB::ZLIB)
-    add_library(mo2::zlib ALIAS ZLIB::ZLIB)
+    # not using find_package(ZLIB) because we want the static version
+    add_library(mo2-zlib IMPORTED STATIC)
+    set_target_properties(mo2-zlib PROPERTIES
+        IMPORTED_LOCATION ${ZLIB_ROOT}/lib/zlibstatic.lib)
+    target_include_directories(mo2-zlib INTERFACE ${ZLIB_ROOT}/include)
+    add_library(mo2::zlib ALIAS mo2-zlib)
 
 endfunction()
 
@@ -342,6 +366,30 @@ function(mo2_find_cpptoml)
     add_library(mo2-cpptoml INTERFACE)
     target_include_directories(mo2-cpptoml INTERFACE "${SOURCE_DIR}/include")
     add_library(mo2::cpptoml ALIAS mo2-cpptoml)
+
+endfunction()
+
+#! mo2_find_usvfs : find and create a mo2::usvfs target
+#
+function(mo2_find_usvfs)
+    if (TARGET mo2-usvfs)
+        return()
+    endif()
+
+    set(USVFS_PATH "${MO2_BUILD_PATH}/usvfs")
+    set(USVFS_INC_PATH "${USVFS_PATH}/include")
+    set(USVFS_LIB_PATH "${USVFS_PATH}/lib")
+
+    add_library(mo2-usvfs IMPORTED SHARED)
+    set_target_properties(mo2-usvfs PROPERTIES
+        IMPORTED_LOCATION "${USVFS_LIB_PATH}/usvfs_x64.dll"
+    )
+    set_target_properties(mo2-usvfs PROPERTIES
+        IMPORTED_IMPLIB "${USVFS_LIB_PATH}/usvfs_x64.lib"
+    )
+    target_include_directories(mo2-usvfs INTERFACE ${USVFS_INC_PATH})
+
+    add_library(mo2::usvfs ALIAS mo2-usvfs)
 
 endfunction()
 
