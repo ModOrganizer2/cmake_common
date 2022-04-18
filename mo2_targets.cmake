@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 include(ExternalProject)
+include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 #! mo2_add_dependencies : add dependencies to the given target
 #
@@ -244,6 +245,8 @@ function(mo2_find_loot)
         return()
     endif()
 
+    mo2_required_variable(NAME LOOT_PATH TYPE PATH)
+
     find_package(Boost COMPONENTS locale REQUIRED)
 
     add_library(mo2-loot IMPORTED SHARED)
@@ -261,6 +264,8 @@ function(mo2_find_spdlog)
         return()
     endif()
 
+    mo2_required_variable(NAME SPDLOG_ROOT TYPE PATH)
+
     add_library(mo2-spdlog INTERFACE)
     target_include_directories(mo2-spdlog INTERFACE ${SPDLOG_ROOT}/include)
     add_library(mo2::spdlog ALIAS mo2-spdlog)
@@ -273,6 +278,8 @@ function(mo2_find_libbsarch)
     if (TARGET mo2-libbsarch)
         return()
     endif()
+
+    mo2_required_variable(NAME LIBBSARCH_ROOT TYPE PATH)
 
     add_library(mo2-libbsarch IMPORTED STATIC)
     set_target_properties(mo2-libbsarch PROPERTIES
@@ -292,6 +299,8 @@ function(mo2_find_zlib)
         return()
     endif()
 
+    mo2_required_variable(NAME ZLIB_ROOT TYPE PATH)
+
     # not using find_package(ZLIB) because we want the static version
     add_library(mo2-zlib IMPORTED STATIC)
     set_target_properties(mo2-zlib PROPERTIES
@@ -307,6 +316,8 @@ function(mo2_find_lz4)
     if (TARGET mo2-lz4)
         return()
     endif()
+
+    mo2_required_variable(NAME LZ4_ROOT TYPE PATH)
 
     add_library(mo2-lz4 IMPORTED SHARED)
     set_target_properties(mo2-lz4 PROPERTIES
@@ -325,6 +336,8 @@ function(mo2_find_7z)
     if (TARGET mo2-7z)
         return()
     endif()
+
+    mo2_required_variable(NAME SEVENZ_ROOT TYPE PATH)
 
     add_library(mo2-7z INTERFACE)
     target_include_directories(mo2-7z INTERFACE ${SEVENZ_ROOT}/CPP)
