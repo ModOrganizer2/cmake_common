@@ -25,6 +25,8 @@ function(mo2_python_translations MO2_TARGET)
     )
 
 	add_custom_target("${MO2_TARGET}_translations" DEPENDS ${qm_files})
+	set_target_properties("${MO2_TARGET}_translations" PROPERTIES FOLDER autogen)
+
     add_dependencies(${MO2_TARGET} "${MO2_TARGET}_translations")
 
 endfunction()
@@ -68,7 +70,14 @@ function(mo2_python_uifiles MO2_TARGET)
 		list(APPEND pyui_files "${output}")
 	endforeach()
 
+	if (${MO2_INPLACE})
+		source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+			PREFIX autogen FILES ${pyui_files})
+	endif()
+
 	add_custom_target("${MO2_TARGET}_uic" DEPENDS ${pyui_files})
+	set_target_properties("${MO2_TARGET}_uic" PROPERTIES FOLDER autogen)
+
 	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_uic")
 
 endfunction()
@@ -114,7 +123,13 @@ function(mo2_python_rcfiles MO2_TARGET)
 		list(APPEND pyrc_files "${output}")
 	endforeach()
 
+	if (${MO2_INPLACE})
+		source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+			PREFIX autogen FILES ${pyrc_files})
+	endif()
+
 	add_custom_target("${MO2_TARGET}_qrc" DEPENDS ${pyrc_files})
+	set_target_properties("${MO2_TARGET}_qrc" PROPERTIES FOLDER autogen)
 	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_qrc")
 
 endfunction()
@@ -138,6 +153,8 @@ function(mo2_python_requirements MO2_TARGET)
 	)
 	add_custom_target("${MO2_TARGET}_libs"
 		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pip.log")
+	set_target_properties("${MO2_TARGET}_libs" PROPERTIES FOLDER autogen)
+
 	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_libs")
 endfunction()
 
@@ -150,10 +167,25 @@ function(mo2_configure_python_module MO2_TARGET)
     set(res_dir "${PROJECT_SOURCE_DIR}/${MO2_RESDIR}")
     set(lib_dir "${PROJECT_SOURCE_DIR}/${MO2_LIBDIR}")
 
-    # install requirements if there are any
-    if(EXISTS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
-		mo2_python_requirements(${MO2_TARGET} LIBDIR "${lib_dir}")
-    endif()
+	# py files
+	file(GLOB_RECURSE py_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
+
+	set(all_src_files ${py_files} ${ui_files} ${qrc_files})
+
+	set(src_files ${all_src_files})
+	list(FILTER src_files EXCLUDE REGEX "${lib_dir}[/\\].*")
+
+	set(lib_files ${all_src_files})
+	list(FILTER lib_files INCLUDE REGEX "${lib_dir}[/\\].*")
+
+	target_sources(${MO2_TARGET} PRIVATE ${src_files})
+	source_group(cmake FILES CMakeLists.txt)
+	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+		PREFIX src
+		FILES ${src_files})
+	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+		PREFIX ${MO2_LIBDIR}
+		FILES ${lib_files})
 
 	# ui files
 	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
@@ -162,6 +194,16 @@ function(mo2_configure_python_module MO2_TARGET)
 	# qrc file
 	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
 	mo2_python_rcfiles(${MO2_TARGET} INPLACE FILES ${qrc_files})
+
+    # install requirements if there are any
+	if(EXISTS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
+		mo2_python_requirements(${MO2_TARGET} LIBDIR "${lib_dir}")
+		target_sources(${MO2_TARGET} PRIVATE
+			"${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
+		)
+		source_group(requirements
+			FILES "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
+	endif()
 
     set(install_dir "${MO2_INSTALL_PATH}/bin/plugins/${MO2_TARGET}")
 
@@ -213,18 +255,19 @@ function(mo2_configure_python_simple MO2_TARGET)
 	# .json files directly in the directory
 	file(GLOB json_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
 
-	# subfolder with Python files
-	set(data_dirs "")
-	file(GLOB everything CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*)
-	foreach(object ${everything})
-		if(IS_DIRECTORY "${object}")
-			# only copy interesting directories
-			file(GLOB_RECURSE dir_content CONFIGURE_DEPENDS "${dir}/*.py")
-			if (dir_content)
-				list(APPEND data_dirs "${object}")
-			endif()
-		endif()
-	endforeach()
+	file(GLOB_RECURSE extra_py_files CONFIGURE_DEPENDS
+		RELATIVE  ${CMAKE_CURRENT_SOURCE_DIR}
+		${CMAKE_CURRENT_SOURCE_DIR}/**/*.py)
+
+	set(src_files ${py_files} ${ui_files} ${json_files} ${extra_py_files})
+	target_sources(${MO2_TARGET} PRIVATE ${src_files})
+	source_group(cmake FILES CMakeLists.txt)
+	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+		PREFIX src
+		FILES ${src_files})
+	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+		PREFIX data
+		FILES ${json_files})
 
     set(install_dir "${MO2_INSTALL_PATH}/bin/plugins")
 
@@ -232,8 +275,11 @@ function(mo2_configure_python_simple MO2_TARGET)
 	install(FILES ${py_files} DESTINATION ${install_dir})
 
 	# folders with Python files go into plugins/data
-	install(
-		DIRECTORY ${data_dirs}
+	set(extra_py_dirs ${extra_py_files})
+	list(TRANSFORM extra_py_dirs REPLACE "[/\\][^/\\]+" "")
+	list(REMOVE_DUPLICATES extra_py_dirs)
+
+	install(DIRECTORY ${extra_py_dirs}
 		DESTINATION "${install_dir}/data"
 		FILES_MATCHING PATTERN "*.py")
 
