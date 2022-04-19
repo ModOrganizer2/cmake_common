@@ -80,11 +80,11 @@ function(mo2_configure_target MO2_TARGET)
 		set(UI_HEADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include_RelWithDebInfo)
 	endif()
 
-	file(GLOB_RECURSE source_files CONFIGURE_DEPENDS *.cpp)
-	file(GLOB_RECURSE header_files CONFIGURE_DEPENDS *.h)
-	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS *.qrc)
-	file(GLOB_RECURSE rc_files CONFIGURE_DEPENDS *.rc)
-	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS *.ui)
+	file(GLOB_RECURSE source_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+	file(GLOB_RECURSE header_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
+	file(GLOB_RECURSE rc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.rc)
+	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	file(GLOB_RECURSE ui_header_files CONFIGURE_DEPENDS ${UI_HEADERS_DIR}/*.h)
 	file(GLOB_RECURSE rule_files CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/*.rule)
 	file(GLOB_RECURSE misc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../*.natvis)
@@ -101,30 +101,49 @@ function(mo2_configure_target MO2_TARGET)
 		find_package(Qt6 COMPONENTS Core REQUIRED)
 		find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
 
+		set(translation_files ${source_files} ${header_files} ${ui_files})
 		if (MO2_EXTRA_TRANSLATIONS)
-			file(GLOB_RECURSE MO2_EXTRA_TRANSLATIONS CONFIGURE_DEPENDS
-				${MO2_EXTRA_TRANSLATIONS}/*.cpp
-				${MO2_EXTRA_TRANSLATIONS}/*.h
-				${MO2_EXTRA_TRANSLATIONS}/*.ui)
+			foreach (EXTRA_TRANSLATIONS ${MO2_EXTRA_TRANSLATIONS})
+				file(GLOB_RECURSE extra_translations CONFIGURE_DEPENDS
+					${MO2_EXTRA_TRANSLATIONS}/*.cpp
+					${MO2_EXTRA_TRANSLATIONS}/*.h
+					${MO2_EXTRA_TRANSLATIONS}/*.ui)
+			list(APPEND translation_files ${extra_translations})
+			endforeach()
 		endif()
 
-		set(translation_files ${source_files} ${header_files} ${ui_files} ${MO2_EXTRA_TRANSLATIONS})
+		set(ts_file ${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts)
+		set(qm_file ${CMAKE_CURRENT_BINARY_DIR}/${MO2_TARGET}.qm)
 
-		qt_add_translations(
-		    ${MO2_TARGET} TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_en.ts
-			QM_FILES_OUTPUT_VARIABLE qm_files
-			SOURCES ${translation_files}
-			LUPDATE_OPTIONS -silent
-			LRELEASE_OPTIONS -silent
-		)
+		add_custom_command(OUTPUT ${ts_file}
+			COMMAND ${QT_ROOT}/bin/lupdate
+			ARGS ${CMAKE_CURRENT_SOURCE_DIR} ${MO2_EXTRA_TRANSLATIONS} -ts "${ts_file}"
+			DEPENDS ${translation_files}
+			VERBATIM)
+
+		add_custom_command(OUTPUT ${qm_file}
+			COMMAND ${QT_ROOT}/bin/lrelease
+			ARGS ${ts_file} -qm ${qm_file}
+			DEPENDS "${ts_file}"
+			VERBATIM)
+
+		add_custom_target("${MO2_TARGET}_lupdate" DEPENDS ${ts_file})
+		set_target_properties("${MO2_TARGET}_lupdate" PROPERTIES FOLDER autogen)
+
+		add_custom_target("${MO2_TARGET}_lrelease" DEPENDS ${qm_file})
+		set_target_properties("${MO2_TARGET}_lrelease" PROPERTIES FOLDER autogen)
 
 		# we need to set this property otherwise there is an issue with C# projects
 		# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
 		# packages on these target but fails because there are obviously none
+		#
+		# we also "hide" the target by moving them to autogen
 		set_target_properties(${MO2_TARGET}_lrelease PROPERTIES
-			VS_GLOBAL_ResolveNugetPackages False)
+			VS_GLOBAL_ResolveNugetPackages False
+			FOLDER autogen)
 		set_target_properties(${MO2_TARGET}_lupdate PROPERTIES
-			VS_GLOBAL_ResolveNugetPackages False)
+			VS_GLOBAL_ResolveNugetPackages False
+			FOLDER autogen)
 
 		add_dependencies(${MO2_TARGET}_lrelease ${MO2_TARGET}_lupdate)
 		add_dependencies(${MO2_TARGET} ${MO2_TARGET}_lrelease)

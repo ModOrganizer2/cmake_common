@@ -12,10 +12,8 @@ function(mo2_python_translations MO2_TARGET)
 
 	set(src_files ${ui_files} ${py_files})
 
-	# generate by lupdate
+	# generate by lupdate/lrelease
 	set(ts_file ${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts)
-
-	# generate by lrelease
 	set(qm_file ${CMAKE_CURRENT_BINARY_DIR}/${MO2_TARGET}.qm)
 
 	# remove python generated files
@@ -25,7 +23,7 @@ function(mo2_python_translations MO2_TARGET)
 
 	add_custom_command(OUTPUT ${ts_file}
 		COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-		ARGS -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate ${_lupdate_options} --ts "${ts_file}" ${src_files}
+		ARGS -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${ts_file}" ${src_files}
 		DEPENDS ${src_files}
 		WORKING_DIRECTORY ${PYTHON_ROOT}
 		VERBATIM)
