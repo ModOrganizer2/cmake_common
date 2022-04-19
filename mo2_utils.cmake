@@ -26,27 +26,17 @@ endfunction()
 # \param:EXECUTABLE full path to the executable
 # \param:WORKDIR working directory (optional, default is the directory of the executable)
 #
-function(mo2_set_project_to_run_from_install)
-	cmake_parse_arguments(MO2 "" "PROJECT;EXECUTABLE;WORKDIR" "" ${ARGN})
-
-	set(vcxproj_user_file "${CMAKE_CURRENT_BINARY_DIR}/${MO2_PROJECT}.vcxproj.user")
+function(mo2_set_project_to_run_from_install TARGET)
+	cmake_parse_arguments(MO2 "" "EXECUTABLE;WORKDIR" "" ${ARGN})
 
     # extract directory
     if (NOT DEFINED MO2_WORKDIR)
-        get_filename_component(MO2_WORKDIR ${MO2_EXECUTABLE} DIRECTORY )
+        get_filename_component(MO2_WORKDIR ${MO2_EXECUTABLE} DIRECTORY)
     endif()
 
-	if(NOT EXISTS ${vcxproj_user_file})
-		file(WRITE ${vcxproj_user_file}
-			"<?xml version=\"1.0\" encoding=\"utf-8\"?>
-				<Project ToolsVersion=\"Current\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">
-				  <PropertyGroup>
-					<LocalDebuggerWorkingDirectory>${MO2_WORKDIR}</LocalDebuggerWorkingDirectory>
-					<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-					<LocalDebuggerCommand>${MO2_EXECUTABLE}</LocalDebuggerCommand>
-				  </PropertyGroup>
-				</Project>")
-	endif()
+	set_target_properties(${MO2_TARGET} PROPERTIES
+		VS_DEBUGGER_WORKING_DIRECTORY "${MO2_WORKDIR}"
+		VS_DEBUGGER_COMMAND "${MO2_EXECUTABLE}")
 endfunction()
 
 #! mo2_required_variable : check that a variable is defined, fails otherwise

@@ -187,6 +187,13 @@ function(mo2_configure_target MO2_TARGET)
 		mo2_add_dependencies(${MO2_TARGET} PRIVATE ${MO2_PRIVATE_DEPENDS})
 	endif()
 
+	# set the VS startup project if not already set
+	get_property(startup_project DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT)
+
+	if (NOT startup_project)
+		set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${MO2_TARGET})
+	endif()
+
 endfunction()
 
 #! mo2_configure_tests : configure a target as a MO2 C++ tests
@@ -224,6 +231,9 @@ function(mo2_configure_uibase MO2_TARGET)
 
 	target_include_directories(${MO2_TARGET} PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/game_features)
+
+	mo2_set_project_to_run_from_install(
+		${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 endfunction()
 
 #! mo2_configure_plugin : configure a target as a MO2 C++ plugin
@@ -235,6 +245,9 @@ function(mo2_configure_plugin MO2_TARGET)
 	mo2_add_dependencies(${MO2_TARGET} PRIVATE uibase)
 
 	set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "plugin")
+
+	mo2_set_project_to_run_from_install(
+		${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 endfunction()
 
 #! mo2_configure_library : configure a C++ library (NOT a plugin)
@@ -252,6 +265,8 @@ function(mo2_configure_library MO2_TARGET)
 	if (${TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
 		set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "library-static")
 	else()
+		mo2_set_project_to_run_from_install(
+			${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 		set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "library-shared")
 	endif()
 endfunction()
@@ -268,6 +283,14 @@ function(mo2_configure_executable MO2_TARGET)
 		PROPERTIES
 		WIN32_EXECUTABLE TRUE
 		MO2_TARGET_TYPE "executable")
+
+	get_target_property(output_name ${MO2_TARGET} OUTPUT_NAME)
+	if("${output_name}" STREQUAL "output_name-NOTFOUND")
+		set(output_name ${MO2_TARGET})
+	endif()
+
+	mo2_set_project_to_run_from_install(
+		${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/${output_name})
 
 	if (${MO2_ELEVATED})
 		# does not work with target_link_options, so keeping it that way for now... this
@@ -310,20 +333,6 @@ function(mo2_install_target MO2_TARGET)
 	# install PDB if possible
 	if (NOT (${MO2_TARGET_TYPE} STREQUAL "library-static"))
 		install(FILES $<TARGET_PDB_FILE:${MO2_TARGET}> DESTINATION pdb)
-	endif()
-
-	# set project to run from main MO2 executable or from themselves for executable
-	if (${MO2_TARGET_TYPE} STREQUAL "executable")
-		get_target_property(output_name ${MO2_TARGET} OUTPUT_NAME)
-		if("${output_name}" STREQUAL "output_name-NOTFOUND")
-			set(output_name ${MO2_TARGET})
-
-			mo2_set_project_to_run_from_install(
-				PROJECT ${PROJECT_NAME} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/${output_name})
-		endif()
-	elseif(NOT (${MO2_TARGET_TYPE} STREQUAL "library-static"))
-		mo2_set_project_to_run_from_install(
-			PROJECT ${PROJECT_NAME} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 	endif()
 
 endfunction()
