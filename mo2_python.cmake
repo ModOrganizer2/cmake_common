@@ -1,33 +1,51 @@
 cmake_minimum_required(VERSION 3.16)
 
-include(${CMAKE_CURRENT_LIST_DIR}/helpers/PyQt5TranslationMacros.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/helpers/PyQt6TranslationMacros.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 #! mo2_python_translations : create translations for a python target
 #
 function(mo2_python_translations MO2_TARGET)
-    find_package(Qt5LinguistTools)
 
-    file(GLOB_RECURSE objects
-		CONFIGURE_DEPENDS LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/*)
+    file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
+    file(GLOB_RECURSE py_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
 
-    set(dirs "")
-    foreach(o ${objects})
-        if(IS_DIRECTORY ${o})
-            list(APPEND dirs ${o})
-        endif()
-    endforeach()
+	set(src_files ${ui_files} ${py_files})
 
-    pyqt5_create_translation(
-        qm_files
-        ${CMAKE_CURRENT_SOURCE_DIR} ${dirs}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_en.ts
-    )
+	# generate by lupdate
+	set(ts_file ${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts)
 
-	add_custom_target("${MO2_TARGET}_translations" DEPENDS ${qm_files})
-	set_target_properties("${MO2_TARGET}_translations" PROPERTIES FOLDER autogen)
+	# generate by lrelease
+	set(qm_file ${CMAKE_CURRENT_BINARY_DIR}/${MO2_TARGET}.qm)
 
-    add_dependencies(${MO2_TARGET} "${MO2_TARGET}_translations")
+	# remove python generated files
+	set(pyuifiles ${ui_files})
+	list(TRANSFORM pyuifiles REPLACE "[.]ui$" ".py")
+	list(REMOVE_ITEM src_files ${pyuifiles})
+
+	add_custom_command(OUTPUT ${ts_file}
+		COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+		ARGS -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate ${_lupdate_options} --ts "${ts_file}" ${src_files} --verbose
+		DEPENDS ${src_files}
+		WORKING_DIRECTORY ${PYTHON_ROOT}
+		VERBATIM)
+
+	add_custom_command(OUTPUT ${qm_file}
+		COMMAND ${QT_ROOT}/bin/lrelease
+		ARGS ${ts_file} -qm ${qm_file}
+		DEPENDS "${ts_file}"
+		VERBATIM)
+
+	add_custom_target("${MO2_TARGET}_lupdate" DEPENDS ${ts_file})
+	set_target_properties("${MO2_TARGET}_lupdate" PROPERTIES FOLDER autogen)
+
+	add_custom_target("${MO2_TARGET}_lrelease" DEPENDS ${qm_file})
+	set_target_properties("${MO2_TARGET}_lrelease" PROPERTIES FOLDER autogen)
+
+	add_dependencies(${MO2_TARGET}_lrelease ${MO2_TARGET}_lupdate)
+    add_dependencies(${MO2_TARGET} ${MO2_TARGET}_lrelease)
+
+	install(FILES ${qm_file} DESTINATION bin/translations)
 
 endfunction()
 
@@ -60,7 +78,7 @@ function(mo2_python_uifiles MO2_TARGET)
 			OUTPUT "${output}"
 			COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
 				-I
-				-m PyQt5.uic.pyuic
+				-m PyQt${QT_MAJOR_VERSION}.uic.pyuic
 				-o "${output}"
 				"${UI_FILE}"
 			WORKING_DIRECTORY ${PYTHON_ROOT}
@@ -156,6 +174,14 @@ function(mo2_python_requirements MO2_TARGET)
 	set_target_properties("${MO2_TARGET}_libs" PROPERTIES FOLDER autogen)
 
 	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_libs")
+
+	install(
+		DIRECTORY "${lib_dir}"
+		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${MO2_TARGET}"
+		FILES_MATCHING
+		PATTERN "__pycache__/*" EXCLUDE
+	)
+
 endfunction()
 
 function(mo2_configure_python_module MO2_TARGET)
@@ -219,13 +245,6 @@ function(mo2_configure_python_module MO2_TARGET)
 	if(EXISTS "${res_dir}")
 		install(
 			DIRECTORY "${res_dir}"
-			DESTINATION ${install_dir}
-		)
-	endif()
-
-	if(EXISTS "${CMAKE_SOURCE_DIR}/plugin-requirements.txt")
-		install(
-			DIRECTORY "${lib_dir}"
 			DESTINATION ${install_dir}
 		)
 	endif()
@@ -310,6 +329,13 @@ function(mo2_configure_python MO2_TARGET)
 		message(FATAL_ERROR "mo2_configure_python should be called with either SIMPLE or MODULE")
 	endif()
 
+    if (${MO2_MODULE})
+        mo2_configure_python_module(${MO2_TARGET} ${ARGN})
+    else()
+        mo2_configure_python_simple(${MO2_TARGET} ${ARGN})
+    endif()
+
+	# do this AFTER configure_ to properly handle the the ui files
 	if(${MO2_TRANSLATIONS})
         mo2_python_translations(${MO2_TARGET})
     endif()
@@ -320,11 +346,5 @@ function(mo2_configure_python MO2_TARGET)
 
 	target_sources(${MO2_TARGET}
 		PRIVATE ${py_files} ${ui_files} ${rc_files} ${qm_files})
-
-    if (${MO2_MODULE})
-        mo2_configure_python_module(${MO2_TARGET} ${ARGN})
-    else()
-        mo2_configure_python_simple(${MO2_TARGET} ${ARGN})
-    endif()
 
 endfunction()

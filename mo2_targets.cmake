@@ -34,10 +34,6 @@ function(mo2_add_dependencies MO2_TARGET PRIVATE_OR_PUBLIC)
 
 	# handle Qt dependencies
 	if (qt_deps)
-		mo2_find_qt_version(QT_VERSION)
-		string(REPLACE "." ";" QT_VERSION_LIST ${QT_VERSION})
-		list(GET QT_VERSION_LIST 0 QT_MAJOR_VERSION)
-
 		# remove Qt:: for find_package
 		list(TRANSFORM qt_deps REPLACE "Qt::" "")
 		find_package(Qt${QT_MAJOR_VERSION} COMPONENTS ${qt_deps} REQUIRED)

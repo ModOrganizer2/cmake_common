@@ -25,6 +25,12 @@ list(APPEND CMAKE_PREFIX_PATH
 	${BOOST_ROOT}/build
 	${MO2_BUILD_PATH}/googletest/build/lib/cmake/GTest)
 
+# find Qt major version and set QT_DEFAULT_MAJOR_VERSION to avoid issues
+# when including LinguistTools without a QtCore
+mo2_find_qt_version(QT_VERSION)
+string(REPLACE "." ";" QT_VERSION_LIST ${QT_VERSION})
+list(GET QT_VERSION_LIST 0 QT_MAJOR_VERSION)
+
 # we add the Qt DLL to the paths for some tools
 set(ENV{PATH} "${QT_ROOT}/bin;$ENV{PATH}")
 
