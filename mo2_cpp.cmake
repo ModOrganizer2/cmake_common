@@ -38,7 +38,7 @@ function(mo2_configure_target MO2_TARGET)
 	mo2_set_if_not_defined(MO2_PRIVATE_DEPENDS "")
 
 	if (${MO2_AUTOMOC})
-		find_package(Qt5 COMPONENTS Widgets REQUIRED)
+		find_package(Qt6 COMPONENTS Widgets REQUIRED)
 		set_target_properties(${MO2_TARGET}
 			PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
 	endif()
@@ -98,7 +98,7 @@ function(mo2_configure_target MO2_TARGET)
 
 
 	if(${MO2_TRANSLATIONS})
-		find_package(Qt5LinguistTools)
+		find_package(Qt6LinguistTools)
 
 		if (MO2_EXTRA_TRANSLATIONS)
 			file(GLOB_RECURSE MO2_EXTRA_TRANSLATIONS CONFIGURE_DEPENDS
@@ -107,12 +107,25 @@ function(mo2_configure_target MO2_TARGET)
 				${MO2_EXTRA_TRANSLATIONS}/*.ui)
 		endif()
 
-		qt5_create_translation(
-			qm_files
-			${source_files} ${header_files} ${ui_files} ${MO2_EXTRA_TRANSLATIONS}
-			${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts
-			OPTIONS -silent
+		set(translation_files ${source_files} ${header_files} ${ui_files} ${MO2_EXTRA_TRANSLATIONS})
+
+		qt_add_translations(
+		    ${MO2_TARGET} TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_en.ts
+			QM_FILES_OUTPUT_VARIABLE qm_files
+			SOURCES ${translation_files}
+			LUPDATE_OPTIONS -silent
 		)
+
+		# we need to set this property otherwise there is an issue with C# projects
+		# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
+		# packages on these target but fails because there are obviously none
+		set_target_properties(${MO2_TARGET}_lrelease PROPERTIES
+			VS_GLOBAL_ResolveNugetPackages False)
+		set_target_properties(${MO2_TARGET}_lupdate PROPERTIES
+			VS_GLOBAL_ResolveNugetPackages False)
+
+		add_dependencies(${MO2_TARGET}_lrelease ${MO2_TARGET}_lupdate)
+		add_dependencies(${MO2_TARGET} ${MO2_TARGET}_lrelease)
 
 		install(FILES ${qm_files} DESTINATION bin/translations)
 	endif()
