@@ -98,7 +98,8 @@ function(mo2_configure_target MO2_TARGET)
 
 
 	if(${MO2_TRANSLATIONS})
-		find_package(Qt6LinguistTools)
+		find_package(Qt6 COMPONENTS Core REQUIRED)
+		find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
 
 		if (MO2_EXTRA_TRANSLATIONS)
 			file(GLOB_RECURSE MO2_EXTRA_TRANSLATIONS CONFIGURE_DEPENDS
@@ -114,6 +115,7 @@ function(mo2_configure_target MO2_TARGET)
 			QM_FILES_OUTPUT_VARIABLE qm_files
 			SOURCES ${translation_files}
 			LUPDATE_OPTIONS -silent
+			LRELEASE_OPTIONS -silent
 		)
 
 		# we need to set this property otherwise there is an issue with C# projects

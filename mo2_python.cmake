@@ -25,7 +25,7 @@ function(mo2_python_translations MO2_TARGET)
 
 	add_custom_command(OUTPUT ${ts_file}
 		COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-		ARGS -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate ${_lupdate_options} --ts "${ts_file}" ${src_files} --verbose
+		ARGS -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate ${_lupdate_options} --ts "${ts_file}" ${src_files}
 		DEPENDS ${src_files}
 		WORKING_DIRECTORY ${PYTHON_ROOT}
 		VERBATIM)
