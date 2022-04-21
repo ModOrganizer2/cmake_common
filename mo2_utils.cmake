@@ -117,6 +117,7 @@ function(mo2_deploy_qt)
 		--verbose 0 \
 		--webenginewidgets \
 		--websockets \
+		--openglwidgets \
 		--libdir dlls \
 		--no-compiler-runtime")
 
@@ -142,6 +143,7 @@ function(mo2_deploy_qt)
 		file(REMOVE_RECURSE \"${bin}/platforms\")
 		file(REMOVE_RECURSE \"${bin}/styles\")
 		file(REMOVE_RECURSE \"${bin}/dlls/imageformats\")
+		file(REMOVE_RECURSE \"${bin}/dlls/tls\")
 	")
 
 	if(NOT ${DEPLOY_NOPLUGINS})
@@ -149,6 +151,7 @@ function(mo2_deploy_qt)
 			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
 			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/styles\")
 			file(RENAME \"${bin}/qtplugins/imageformats\" \"${bin}/dlls/imageformats\")
+			file(RENAME \"${bin}/qtplugins/tls\" \"${bin}/dlls/tls\")
 			file(REMOVE_RECURSE \"${bin}/qtplugins\")
 		")
 	endif()
