@@ -132,8 +132,6 @@ function(mo2_python_requirements MO2_TARGET)
 	install(
 		DIRECTORY "${lib_dir}"
 		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${MO2_TARGET}"
-		FILES_MATCHING
-		PATTERN "__pycache__/*" EXCLUDE
 	)
 
 endfunction()
