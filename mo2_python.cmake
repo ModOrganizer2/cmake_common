@@ -3,50 +3,6 @@ cmake_minimum_required(VERSION 3.16)
 include(${CMAKE_CURRENT_LIST_DIR}/helpers/PyQt6TranslationMacros.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
-#! mo2_python_translations : create translations for a python target
-#
-function(mo2_python_translations MO2_TARGET)
-
-    file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
-    file(GLOB_RECURSE py_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
-
-	set(src_files ${ui_files} ${py_files})
-
-	# generate by lupdate/lrelease
-	set(ts_file ${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts)
-	set(qm_file ${CMAKE_CURRENT_BINARY_DIR}/${MO2_TARGET}.qm)
-
-	# remove python generated files
-	set(pyuifiles ${ui_files})
-	list(TRANSFORM pyuifiles REPLACE "[.]ui$" ".py")
-	list(REMOVE_ITEM src_files ${pyuifiles})
-
-	add_custom_command(OUTPUT ${ts_file}
-		COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
-		ARGS -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${ts_file}" ${src_files}
-		DEPENDS ${src_files}
-		WORKING_DIRECTORY ${PYTHON_ROOT}
-		VERBATIM)
-
-	add_custom_command(OUTPUT ${qm_file}
-		COMMAND ${QT_ROOT}/bin/lrelease
-		ARGS ${ts_file} -qm ${qm_file}
-		DEPENDS "${ts_file}"
-		VERBATIM)
-
-	add_custom_target("${MO2_TARGET}_lupdate" DEPENDS ${ts_file})
-	set_target_properties("${MO2_TARGET}_lupdate" PROPERTIES FOLDER autogen)
-
-	add_custom_target("${MO2_TARGET}_lrelease" DEPENDS ${qm_file})
-	set_target_properties("${MO2_TARGET}_lrelease" PROPERTIES FOLDER autogen)
-
-	add_dependencies(${MO2_TARGET}_lrelease ${MO2_TARGET}_lupdate)
-    add_dependencies(${MO2_TARGET} ${MO2_TARGET}_lrelease)
-
-	install(FILES ${qm_file} DESTINATION bin/translations)
-
-endfunction()
-
 #! mo2_python_uifiles : create .py files from .ui files for a python target
 #
 # \param:INPLACE if specified, .py files are generated next to the .ui files, useful
@@ -335,7 +291,7 @@ function(mo2_configure_python MO2_TARGET)
 
 	# do this AFTER configure_ to properly handle the the ui files
 	if(${MO2_TRANSLATIONS})
-        mo2_python_translations(${MO2_TARGET})
+        mo2_add_translations(${MO2_TARGET} SOURCES ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
 
 	file(GLOB_RECURSE py_files CONFIGURE_DEPENDS *.py)

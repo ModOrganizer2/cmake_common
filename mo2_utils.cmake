@@ -154,4 +154,141 @@ function(mo2_deploy_qt)
 	endif()
 endfunction()
 
+#! generate .ts files from the given sources
+#
+# this function adds a ${TARGET}_lupdate target
+#
+# \param:TARGET target to generate releases for
+# \param:TS_FILE .ts file to generate
+# \param:SOURCES source folders to generate .ts file from
+#
+function(mo2_add_lupdate TARGET)
+	cmake_parse_arguments(MO2 "" "TS_FILE" "SOURCES" ${ARGN})
+
+	set(translation_files "")
+	set(ui_files "")
+
+	get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
+
+	if ("CXX" IN_LIST languages)
+		set(is_cpp True)
+	else()
+		set(is_cpp False)
+	endif()
+
+	foreach (SOURCE ${MO2_SOURCES})
+		if (${is_cpp})
+			file(GLOB_RECURSE source_sources CONFIGURE_DEPENDS
+				${SOURCE}/*.cpp
+				${SOURCE}/*.h)
+		else()
+			file(GLOB_RECURSE source_sources CONFIGURE_DEPENDS ${SOURCE}/*.py)
+		endif()
+
+		# ui files
+		file(GLOB_RECURSE source_ui_files CONFIGURE_DEPENDS ${SOURCE}/*.ui)
+
+		list(APPEND ui_files ${source_ui_files})
+		list(APPEND translation_files ${source_sources} ${source_ui_files})
+	endforeach()
+
+	# for Python, we need to remove the .py generated because these can be generated
+	# in the source folder
+	list(TRANSFORM ui_files REPLACE "[.]ui$" ".py")
+	list(REMOVE_ITEM translation_files ${ui_files})
+
+	message(TRACE "TS_FILE: ${MO2_TS_FILE}, SOURCES: ${MO2_SOURCES}, FILES: ${translation_files}")
+
+	if (${is_cpp})
+		set(lrelease_command ${QT_ROOT}/bin/lupdate)
+		set(lrelease_args ${MO2_SOURCES} -ts ${MO2_TS_FILE})
+	else()
+
+	endif()
+
+	add_custom_command(OUTPUT ${MO2_TS_FILE}
+		COMMAND ${lrelease_command} ARGS ${lrelease_args}
+		DEPENDS ${translation_files}
+		VERBATIM)
+
+	add_custom_target("${MO2_TARGET}_lupdate" DEPENDS ${MO2_TS_FILE})
+
+	# we need to set this property otherwise there is an issue with C# projects
+	# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
+	# packages on these target but fails because there are obviously none
+	#
+	# we also "hide" the target by moving them to autogen
+	set_target_properties(${MO2_TARGET}_lupdate PROPERTIES
+		VS_GLOBAL_ResolveNugetPackages False
+		FOLDER autogen)
+
+endfunction()
+
+#! generate .ts files from the given sources
+#
+# this function adds a ${TARGET}_lrelease target
+#
+# \param:INSTALL if set, QM files will be installed to bin/translations
+# \param:TARGET target to generate releases for
+# \param:QM_FILE .qm file to generate
+# \param:TS_FILES source ts
+#
+function(mo2_add_lrelease MO2_TARGET)
+	cmake_parse_arguments(MO2 "INSTALL" "QM_FILE" "TS_FILES" ${ARGN})
+
+	add_custom_command(OUTPUT ${MO2_QM_FILE}
+		COMMAND ${QT_ROOT}/bin/lrelease
+		ARGS ${MO2_TS_FILES} -qm ${MO2_QM_FILE}
+		DEPENDS "${MO2_TS_FILES}"
+		VERBATIM)
+
+	add_custom_target("${MO2_TARGET}_lrelease" DEPENDS ${MO2_QM_FILE})
+
+	# we need to set this property otherwise there is an issue with C# projects
+	# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
+	# packages on these target but fails because there are obviously none
+	#
+	# we also "hide" the target by moving them to autogen
+	set_target_properties(${MO2_TARGET}_lrelease PROPERTIES
+		VS_GLOBAL_ResolveNugetPackages False
+		FOLDER autogen)
+
+	if (${MO2_INSTALL})
+		install(FILES ${MO2_QM_FILE} DESTINATION bin/translations)
+	endif()
+
+endfunction()
+
+function(mo2_add_translations TARGET)
+	cmake_parse_arguments(MO2 "RELEASE;INSTALL_RELEASE" "TS_FILE;QM_FILE" "SOURCES" ${ARGN})
+
+	if (NOT MO2_TS_FILE)
+		set(MO2_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}_en.ts)
+	endif()
+
+	if (NOT MO2_QM_FILE)
+		set(MO2_QM_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.qm)
+	endif()
+
+	# force release with install
+	if (${MO2_INSTALL_RELEASE})
+		set(MO2_RELEASE True)
+	endif()
+
+	mo2_add_lupdate(${TARGET} TS_FILE ${MO2_TS_FILE} SOURCES ${MO2_SOURCES})
+
+	if (${MO2_RELEASE})
+		mo2_add_lrelease(${TARGET}
+			INSTALL ${MO2_INSTALL_RELEASE}
+			TS_FILES ${MO2_TS_FILE}
+			QM_FILE ${MO2_QM_FILE})
+
+		add_dependencies(${TARGET}_lrelease ${TARGET}_lupdate)
+		add_dependencies(${TARGET} ${TARGET}_lrelease)
+	else()
+		add_dependencies(${TARGET} ${TARGET}_lupdate)
+	endif()
+
+endfunction()
+
 set(MO2_UTILS_DEFINED TRUE)

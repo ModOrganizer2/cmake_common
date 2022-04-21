@@ -98,57 +98,8 @@ function(mo2_configure_target MO2_TARGET)
 
 
 	if(${MO2_TRANSLATIONS})
-		find_package(Qt6 COMPONENTS Core REQUIRED)
-		find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
-
-		set(translation_files ${source_files} ${header_files} ${ui_files})
-		if (MO2_EXTRA_TRANSLATIONS)
-			foreach (EXTRA_TRANSLATIONS ${MO2_EXTRA_TRANSLATIONS})
-				file(GLOB_RECURSE extra_translations CONFIGURE_DEPENDS
-					${MO2_EXTRA_TRANSLATIONS}/*.cpp
-					${MO2_EXTRA_TRANSLATIONS}/*.h
-					${MO2_EXTRA_TRANSLATIONS}/*.ui)
-			list(APPEND translation_files ${extra_translations})
-			endforeach()
-		endif()
-
-		set(ts_file ${CMAKE_CURRENT_SOURCE_DIR}/${MO2_TARGET}_en.ts)
-		set(qm_file ${CMAKE_CURRENT_BINARY_DIR}/${MO2_TARGET}.qm)
-
-		add_custom_command(OUTPUT ${ts_file}
-			COMMAND ${QT_ROOT}/bin/lupdate
-			ARGS ${CMAKE_CURRENT_SOURCE_DIR} ${MO2_EXTRA_TRANSLATIONS} -ts "${ts_file}"
-			DEPENDS ${translation_files}
-			VERBATIM)
-
-		add_custom_command(OUTPUT ${qm_file}
-			COMMAND ${QT_ROOT}/bin/lrelease
-			ARGS ${ts_file} -qm ${qm_file}
-			DEPENDS "${ts_file}"
-			VERBATIM)
-
-		add_custom_target("${MO2_TARGET}_lupdate" DEPENDS ${ts_file})
-		set_target_properties("${MO2_TARGET}_lupdate" PROPERTIES FOLDER autogen)
-
-		add_custom_target("${MO2_TARGET}_lrelease" DEPENDS ${qm_file})
-		set_target_properties("${MO2_TARGET}_lrelease" PROPERTIES FOLDER autogen)
-
-		# we need to set this property otherwise there is an issue with C# projects
-		# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
-		# packages on these target but fails because there are obviously none
-		#
-		# we also "hide" the target by moving them to autogen
-		set_target_properties(${MO2_TARGET}_lrelease PROPERTIES
-			VS_GLOBAL_ResolveNugetPackages False
-			FOLDER autogen)
-		set_target_properties(${MO2_TARGET}_lupdate PROPERTIES
-			VS_GLOBAL_ResolveNugetPackages False
-			FOLDER autogen)
-
-		add_dependencies(${MO2_TARGET}_lrelease ${MO2_TARGET}_lupdate)
-		add_dependencies(${MO2_TARGET} ${MO2_TARGET}_lrelease)
-
-		install(FILES ${qm_files} DESTINATION bin/translations)
+		mo2_add_translations(${MO2_TARGET}
+			SOURCES ${CMAKE_CURRENT_SOURCE_DIR} ${MO2_EXTRA_TRANSLATIONS})
 	endif()
 
 	target_sources(${MO2_TARGET}
