@@ -376,6 +376,8 @@ function(mo2_find_cpptoml)
 
     add_library(mo2-cpptoml INTERFACE)
     target_include_directories(mo2-cpptoml INTERFACE "${SOURCE_DIR}/include")
+    add_dependencies(mo2-cpptoml cpptoml)
+
     add_library(mo2::cpptoml ALIAS mo2-cpptoml)
 
 endfunction()
