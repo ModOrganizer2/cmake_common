@@ -128,6 +128,8 @@ function(mo2_python_requirements MO2_TARGET)
 
 	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_libs")
 
+	file(MAKE_DIRECTORY "${lib_dir}")
+
 	install(
 		DIRECTORY "${lib_dir}"
 		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${MO2_TARGET}"
