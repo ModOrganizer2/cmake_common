@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-include(${CMAKE_CURRENT_LIST_DIR}/helpers/PyQt6TranslationMacros.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 #! mo2_python_uifiles : create .py files from .ui files for a python target
