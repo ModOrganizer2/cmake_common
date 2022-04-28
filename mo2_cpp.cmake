@@ -21,7 +21,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_targets.cmake)
 # \param:EXTRA_TRANSLATIONS extra translations to include
 #
 function(mo2_configure_target MO2_TARGET)
-	cmake_parse_arguments(MO2 ""
+	cmake_parse_arguments(MO2 "SOURCE_TREE"
 		"WARNINGS;PERMISSIVE;BIGOBJ;CLI;TRANSLATIONS;AUTOMOC"
 		"EXTRA_TRANSLATIONS;PUBLIC_DEPENDS;PRIVATE_DEPENDS"
 		${ARGN})
@@ -89,7 +89,13 @@ function(mo2_configure_target MO2_TARGET)
 	file(GLOB_RECURSE rule_files CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/*.rule)
 	file(GLOB_RECURSE misc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../*.natvis)
 
-	source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)")
+	if (${MO2_SOURCE_TREE})
+		source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+			PREFIX src
+			FILES ${source_files} ${header_files})
+	else()
+		source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)")
+	endif()
 	source_group(ui REGULAR_EXPRESSION ".*\\.ui")
 	source_group(cmake FILES CMakeLists.txt)
 	source_group(autogen FILES ${rule_files} ${qm_files} ${ui_header_files})
