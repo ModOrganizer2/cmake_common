@@ -242,6 +242,8 @@ function(mo2_configure_python_module TARGET)
 		FILES_MATCHING PATTERN "*.py"
 		PATTERN ".git" EXCLUDE
 		PATTERN ".github" EXCLUDE
+		PATTERN ".tox" EXCLUDE
+		PATTERN ".mypy_cache" EXCLUDE
 		PATTERN "vsbuild" EXCLUDE)
 
 	# copy the resource directory if it exists
