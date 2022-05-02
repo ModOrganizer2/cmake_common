@@ -294,7 +294,7 @@ function(mo2_configure_executable TARGET)
 
 	mo2_configure_target(${TARGET} ${ARGN})
 	set_target_properties(${TARGET}
-		PROPERTIES WIN32_EXECUTABLE TRUE TARGET_TYPE "executable")
+		PROPERTIES WIN32_EXECUTABLE TRUE MO2_TARGET_TYPE "executable")
 
 	get_target_property(output_name ${TARGET} OUTPUT_NAME)
 	if("${output_name}" STREQUAL "output_name-NOTFOUND")
@@ -349,7 +349,7 @@ function(mo2_install_target TARGET)
 		mo2_set_if_not_defined(MO2_INSTALLDIR "bin")
 		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
 	else()
-		message(ERROR "unknown MO2 target type for target '${TARGET}', did you forget using mo2_configure_XXX?")
+		message(FATAL_ERROR "unknown MO2 target type for target '${TARGET}', did you forget using mo2_configure_XXX?")
 	endif()
 
 	# install PDB if possible
