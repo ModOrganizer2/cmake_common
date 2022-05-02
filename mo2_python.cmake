@@ -151,7 +151,7 @@ endfunction()
 # \param:LIBDIR library to install requirements to
 #
 function(mo2_python_requirements TARGET)
-	cmake_parse_arguments(MO2 "" "LIBDIR" "")
+	cmake_parse_arguments(MO2 "" "LIBDIR" "" ${ARGN})
 
 	add_custom_command(
 		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pip.log"
@@ -175,7 +175,7 @@ function(mo2_python_requirements TARGET)
 
 	install(
 		DIRECTORY "${MO2_LIBDIR}"
-		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}"
+		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}/"
 	)
 
 endfunction()
@@ -240,7 +240,8 @@ function(mo2_configure_python_module TARGET)
 		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 		DESTINATION ${install_dir}
 		FILES_MATCHING PATTERN "*.py"
-		PATTERN ".git*" EXCLUDE
+		PATTERN ".git" EXCLUDE
+		PATTERN ".github" EXCLUDE
 		PATTERN "vsbuild" EXCLUDE)
 
 	# copy the resource directory if it exists
