@@ -105,6 +105,40 @@ function(mo2_python_rcfiles MO2_TARGET)
 
 endfunction()
 
+#! mo2_python_pip_install : run "pip install ..."
+#
+function(mo2_python_pip_install TARGET)
+	cmake_parse_arguments(MO2 "" "DIRECTORY" "PACKAGES" ${ARGN})
+
+	if (NOT MO2_DIRECTORY)
+		message(FATAL_ERROR "must specified a DIRECTORY for pip install")
+	endif()
+
+	string(MAKE_C_IDENTIFIER "${MO2_PACKAGES}" PIP_FILE_LOG)
+	set(pip_log_file "${CMAKE_CURRENT_BINARY_DIR}/${PIP_FILE_LOG}.log")
+
+	add_custom_command(
+		OUTPUT "${pip_log_file}"
+		COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+				-I
+				-m pip
+				install --force --upgrade --disable-pip-version-check
+				--target="${MO2_DIRECTORY}"
+				--log="${pip_log_file}"
+				${MO2_PACKAGES}
+		WORKING_DIRECTORY ${PYTHON_ROOT}
+	)
+
+	set(pip_target_name "${TARGET}_pip_${PIP_FILE_LOG}")
+
+	add_custom_target(${pip_target_name} ALL DEPENDS "${pip_log_file}")
+	set_target_properties(${pip_target_name} PROPERTIES FOLDER autogen)
+
+	add_dependencies(${TARGET} ${pip_target_name})
+
+
+endfunction()
+
 #! mo2_python_requirements : install requirements for a python target
 #
 function(mo2_python_requirements MO2_TARGET)
@@ -123,7 +157,7 @@ function(mo2_python_requirements MO2_TARGET)
 		DEPENDS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
 	)
 	add_custom_target("${MO2_TARGET}_libs"
-		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pip.log")
+		ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pip.log")
 	set_target_properties("${MO2_TARGET}_libs" PROPERTIES FOLDER autogen)
 
 	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_libs")
