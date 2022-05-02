@@ -178,20 +178,32 @@ endfunction()
 #
 # extra arguments are given to mo2_configure_target
 #
-function(mo2_configure_tests MO2_TARGET)
-	mo2_find_uibase()
-
-	mo2_configure_target(${MO2_TARGET} TRANSLATIONS OFF AUTOMOC OFF ${ARGN})
-	set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "tests")
+function(mo2_configure_tests TARGET)
+	mo2_configure_target(${TARGET} TRANSLATIONS OFF AUTOMOC OFF ${ARGN})
+	set_target_properties(${TARGET} PROPERTIES MO2_TARGET_TYPE "tests")
 
 	find_package(GTest REQUIRED)
-	set_property(TARGET ${MO2_TARGET} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
-	target_link_libraries(${MO2_TARGET}
-		PRIVATE mo2::uibase GTest::gtest GTest::gmock GTest::gtest_main)
+	target_link_libraries(${TARGET} PRIVATE GTest::gtest GTest::gmock GTest::gtest_main)
 
-	# this would be nice but it requires Qt DLL in the path, etc., which is kind of
-	# a PITA, and not working right now
-	# gtest_discover_tests(${MO2_TARGET} WORKING_DIRECTORY ${MO2_INSTALL_PATH}/bin)
+	# gtest_discover_tests would be nice but it requires Qt DLL, uibase, etc., in the
+	# path, etc., and is not working right now
+	#
+	# there is an open CMake issue: https://gitlab.kitware.com/cmake/cmake/-/issues/21453
+	#
+	# gtest_discover_tests(${TARGET}
+	# 	WORKING_DIRECTORY ${MO2_INSTALL_PATH}/bin
+	# 	PROPERTIES
+	# 	VS_DEBUGGER_WORKING_DIRECTORY ${MO2_INSTALL_PATH}/bin
+	# )
+	#
+
+	gtest_add_tests(TARGET ${TARGET} TEST_LIST ${TARGET}_gtests)
+	set(${TARGET}_gtests ${${TARGET}_gtests} PARENT_SCOPE)
+	set_tests_properties(${bsa_packer_tests_gtests}
+		PROPERTIES
+		WORKING_DIRECTORY "${MO2_INSTALL_PATH}/bin"
+		ENVIRONMENT_MODIFICATION
+		"PATH=path_list_prepend:${MO2_INSTALL_PATH}/bin/dlls\\;${MO2_INSTALL_PATH}/bin/plugins")
 endfunction()
 
 #! mo2_configure_uibase : configure the uibase target for MO2
@@ -218,14 +230,14 @@ endfunction()
 #
 # extra arguments are given to mo2_configure_target
 #
-function(mo2_configure_plugin MO2_TARGET)
-	mo2_configure_target(${MO2_TARGET} ${ARGN})
-	mo2_add_dependencies(${MO2_TARGET} PRIVATE uibase)
+function(mo2_configure_plugin TARGET)
+	mo2_configure_target(${TARGET} ${ARGN})
+	mo2_add_dependencies(${TARGET} PUBLIC uibase)
 
-	set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "plugin")
+	set_target_properties(${TARGET} PROPERTIES MO2_TARGET_TYPE "plugin")
 
 	mo2_set_project_to_run_from_install(
-		${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
+		${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 endfunction()
 
 #! mo2_configure_library : configure a C++ library (NOT a plugin)
@@ -283,7 +295,7 @@ endfunction()
 # for this to work properly, the target must have been configured
 #
 function(mo2_install_target MO2_TARGET)
-	cmake_parse_arguments(MO2 "" "INSTALLDIR" "" ${ARGN})
+	cmake_parse_arguments(MO2 "FOLDER" "INSTALLDIR" "" ${ARGN})
 
 
 	get_target_property(MO2_TARGET_TYPE ${MO2_TARGET} MO2_TARGET_TYPE)
@@ -293,7 +305,11 @@ function(mo2_install_target MO2_TARGET)
 		install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION bin)
 		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "plugin")
-		install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION bin/plugins)
+		if (${MO2_FOLDER})
+			install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION bin/plugins/${MO2_TARGET})
+		else()
+			install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION bin/plugins)
+		endif()
 		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-static")
 		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
