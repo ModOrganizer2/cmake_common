@@ -181,11 +181,16 @@ endfunction()
 #
 # this function creates a set of tests available in the ${TARET}_gtests variable
 #
+# \param:DEPENDS dependencies to link to AND add folder for ctest to look for DLLs,
+#   typically the library being tests
+#
 # extra arguments are given to mo2_configure_target, TRANSLATIONS and AUTOMOC are
 # OFF by default
 #
 function(mo2_configure_tests TARGET)
 	mo2_configure_target(${TARGET} TRANSLATIONS OFF AUTOMOC OFF ${ARGN})
+	cmake_parse_arguments(MO2 "" "" "DEPENDS" ${ARGN})
+
 	set_target_properties(${TARGET} PROPERTIES MO2_TARGET_TYPE "tests")
 
 	find_package(GTest REQUIRED)
@@ -203,13 +208,20 @@ function(mo2_configure_tests TARGET)
 	# )
 	#
 
+	set(extra_paths "${MO2_INSTALL_PATH}/bin/dlls")
+	foreach (DEPEND ${MO2_DEPENDS})
+		target_link_libraries(${TARGET} PUBLIC ${DEPEND})
+		string(APPEND extra_paths "\\;$<TARGET_FILE_DIR:${DEPEND}>")
+	endforeach()
+
 	gtest_add_tests(TARGET ${TARGET} TEST_LIST ${TARGET}_gtests)
 	set(${TARGET}_gtests ${${TARGET}_gtests} PARENT_SCOPE)
-	set_tests_properties(${bsa_packer_tests_gtests}
+
+	set_tests_properties(${${TARGET}_gtests}
 		PROPERTIES
 		WORKING_DIRECTORY "${MO2_INSTALL_PATH}/bin"
 		ENVIRONMENT_MODIFICATION
-		"PATH=path_list_prepend:${MO2_INSTALL_PATH}/bin/dlls\\;${MO2_INSTALL_PATH}/bin/plugins")
+		"PATH=path_list_prepend:${extra_paths}")
 endfunction()
 
 #! mo2_configure_uibase : configure the uibase target for MO2
