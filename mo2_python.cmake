@@ -4,11 +4,12 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 #! mo2_python_uifiles : create .py files from .ui files for a python target
 #
+# \param:TARGET target to generate .py files for
 # \param:INPLACE if specified, .py files are generated next to the .ui files, useful
 #     for Python modules, otherwise files are generated in the binary directory
 # \param:FILES list of .ui files to generate .py files from
 #
-function(mo2_python_uifiles MO2_TARGET)
+function(mo2_python_uifiles TARGET)
 	cmake_parse_arguments(MO2 "INPLACE" "" "FILES" ${ARGN})
 
 	if (NOT MO2_FILES)
@@ -46,20 +47,21 @@ function(mo2_python_uifiles MO2_TARGET)
 			PREFIX autogen FILES ${pyui_files})
 	endif()
 
-	add_custom_target("${MO2_TARGET}_uic" DEPENDS ${pyui_files})
-	set_target_properties("${MO2_TARGET}_uic" PROPERTIES FOLDER autogen)
+	add_custom_target("${TARGET}_uic" DEPENDS ${pyui_files})
+	set_target_properties("${TARGET}_uic" PROPERTIES FOLDER autogen)
 
-	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_uic")
+	add_dependencies(${TARGET} "${TARGET}_uic")
 
 endfunction()
 
 #! mo2_python_rcfiles : create .py files from .qrc files for a python target
 #
+# \param:TARGET target to generate .py files for
 # \param:INPLACE if specified, .py files are generated next to the .qrc files, useful
 #     for Python modules, otherwise files are generated in the binary directory
 # \param:FILES list of .qrc files to generate .py files from
 #
-function(mo2_python_rcfiles MO2_TARGET)
+function(mo2_python_rcfiles TARGET)
 	cmake_parse_arguments(MO2 "" "INPLACE" "FILES" ${ARGN})
 
 	if (NOT MO2_FILES)
@@ -99,13 +101,18 @@ function(mo2_python_rcfiles MO2_TARGET)
 			PREFIX autogen FILES ${pyrc_files})
 	endif()
 
-	add_custom_target("${MO2_TARGET}_qrc" DEPENDS ${pyrc_files})
-	set_target_properties("${MO2_TARGET}_qrc" PROPERTIES FOLDER autogen)
-	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_qrc")
+	add_custom_target("${TARGET}_qrc" DEPENDS ${pyrc_files})
+	set_target_properties("${TARGET}_qrc" PROPERTIES FOLDER autogen)
+	add_dependencies(${TARGET} "${TARGET}_qrc")
 
 endfunction()
 
 #! mo2_python_pip_install : run "pip install ..."
+#
+# \param:TARGET target to install Python package for
+# \param:DIRECTORY directory to install libraries to, REQUIRED
+# \param:PACKAGES packages to install, REQUIRED, can contain version constraints, e.g.,
+#   "PyQt6==6.3.0"
 #
 function(mo2_python_pip_install TARGET)
 	cmake_parse_arguments(MO2 "" "DIRECTORY" "PACKAGES" ${ARGN})
@@ -136,12 +143,14 @@ function(mo2_python_pip_install TARGET)
 
 	add_dependencies(${TARGET} ${pip_target_name})
 
-
 endfunction()
 
 #! mo2_python_requirements : install requirements for a python target
 #
-function(mo2_python_requirements MO2_TARGET)
+# \param:TARGET target to install requirements for
+# \param:LIBDIR library to install requirements to
+#
+function(mo2_python_requirements TARGET)
 	cmake_parse_arguments(MO2 "" "LIBDIR" "")
 
 	add_custom_command(
@@ -150,28 +159,34 @@ function(mo2_python_requirements MO2_TARGET)
 				-I
 				-m pip
 				install --force --upgrade --disable-pip-version-check
-				--target="${lib_dir}"
+				--target="${MO2_LIBDIR}"
 				--log="${CMAKE_CURRENT_BINARY_DIR}/pip.log"
 				-r "${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
 		WORKING_DIRECTORY ${PYTHON_ROOT}
 		DEPENDS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
 	)
-	add_custom_target("${MO2_TARGET}_libs"
+	add_custom_target("${TARGET}_libs"
 		ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pip.log")
-	set_target_properties("${MO2_TARGET}_libs" PROPERTIES FOLDER autogen)
+	set_target_properties("${TARGET}_libs" PROPERTIES FOLDER autogen)
 
-	add_dependencies(${MO2_TARGET} "${MO2_TARGET}_libs")
+	add_dependencies(${TARGET} "${TARGET}_libs")
 
-	file(MAKE_DIRECTORY "${lib_dir}")
+	file(MAKE_DIRECTORY "${MO2_LIBDIR}")
 
 	install(
-		DIRECTORY "${lib_dir}"
-		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${MO2_TARGET}"
+		DIRECTORY "${MO2_LIBDIR}"
+		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}"
 	)
 
 endfunction()
 
-function(mo2_configure_python_module MO2_TARGET)
+#! mo2_configure_python_module : configure a Python plugin module
+#
+# \param:TARGET target for the Python plugin
+# \param:LIBDIR directory to install requirements (if any) to, default is "lib"
+# \param:RESDIR directory to install genereated resources (if any) to, default is "res"
+#
+function(mo2_configure_python_module TARGET)
     cmake_parse_arguments(MO2 "" "LIBDIR;RESDIR" "" ${ARGN})
 
     mo2_set_if_not_defined(MO2_LIBDIR "lib")
@@ -191,7 +206,7 @@ function(mo2_configure_python_module MO2_TARGET)
 	set(lib_files ${all_src_files})
 	list(FILTER lib_files INCLUDE REGEX "${lib_dir}[/\\].*")
 
-	target_sources(${MO2_TARGET} PRIVATE ${src_files})
+	target_sources(${TARGET} PRIVATE ${src_files})
 	source_group(cmake FILES CMakeLists.txt)
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
 		PREFIX src
@@ -202,23 +217,23 @@ function(mo2_configure_python_module MO2_TARGET)
 
 	# ui files
 	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
-	mo2_python_uifiles(${MO2_TARGET} INPLACE FILES ${ui_files})
+	mo2_python_uifiles(${TARGET} INPLACE FILES ${ui_files})
 
 	# qrc file
 	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
-	mo2_python_rcfiles(${MO2_TARGET} INPLACE FILES ${qrc_files})
+	mo2_python_rcfiles(${TARGET} INPLACE FILES ${qrc_files})
 
     # install requirements if there are any
 	if(EXISTS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
-		mo2_python_requirements(${MO2_TARGET} LIBDIR "${lib_dir}")
-		target_sources(${MO2_TARGET} PRIVATE
+		mo2_python_requirements(${TARGET} LIBDIR "${lib_dir}")
+		target_sources(${TARGET} PRIVATE
 			"${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
 		)
 		source_group(requirements
 			FILES "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
 	endif()
 
-    set(install_dir "${MO2_INSTALL_PATH}/bin/plugins/${MO2_TARGET}")
+    set(install_dir "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}")
 
 	# directories that go in bin/plugins/${name}
 	install(
@@ -238,7 +253,11 @@ function(mo2_configure_python_module MO2_TARGET)
 
 endfunction()
 
-function(mo2_configure_python_simple MO2_TARGET)
+#! mo2_configure_python_simple : configure a Python plugin (simple file)
+#
+# \param:TARGET target for the Python plugin
+#
+function(mo2_configure_python_simple TARGET)
 
 	# this copies all the .py files that are directly in src/ into
 	# ${install_dir}/
@@ -249,11 +268,11 @@ function(mo2_configure_python_simple MO2_TARGET)
 
 	# ui files
 	file(GLOB ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
-	mo2_python_uifiles(${MO2_TARGET} FILES ${ui_files})
+	mo2_python_uifiles(${TARGET} FILES ${ui_files})
 
 	# qrc file
 	file(GLOB qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
-	mo2_python_rcfiles(${MO2_TARGET} FILES ${qrc_files})
+	mo2_python_rcfiles(${TARGET} FILES ${qrc_files})
 
 	# .py files directly in the directory
 	file(GLOB py_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
@@ -266,7 +285,7 @@ function(mo2_configure_python_simple MO2_TARGET)
 		${CMAKE_CURRENT_SOURCE_DIR}/**/*.py)
 
 	set(src_files ${py_files} ${ui_files} ${json_files} ${extra_py_files})
-	target_sources(${MO2_TARGET} PRIVATE ${src_files})
+	target_sources(${TARGET} PRIVATE ${src_files})
 	source_group(cmake FILES CMakeLists.txt)
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
 		PREFIX src
@@ -306,8 +325,11 @@ endfunction()
 #! mo2_configure_python : configure a MO2 python target
 #
 # \param:MODULE indicates if this is a Python module plugin or a file plugin
+# \param:TRANSLATIONS ON to generate translations (default), OFF to not generate them
+# \param:LIB only for Python module, see mo2_configure_python_module
+# \param:RES only for Python module, see mo2_configure_python_module
 #
-function(mo2_configure_python MO2_TARGET)
+function(mo2_configure_python TARGET)
     cmake_parse_arguments(MO2 "MODULE;SIMPLE" "TRANSLATIONS;LIB;RES" "" ${ARGN})
 
 	mo2_set_if_not_defined(MO2_TRANSLATIONS ON)
@@ -317,21 +339,21 @@ function(mo2_configure_python MO2_TARGET)
 	endif()
 
     if (${MO2_MODULE})
-        mo2_configure_python_module(${MO2_TARGET} ${ARGN})
+        mo2_configure_python_module(${TARGET} ${ARGN})
     else()
-        mo2_configure_python_simple(${MO2_TARGET} ${ARGN})
+        mo2_configure_python_simple(${TARGET} ${ARGN})
     endif()
 
 	# do this AFTER configure_ to properly handle the the ui files
 	if(${MO2_TRANSLATIONS})
-        mo2_add_translations(${MO2_TARGET} SOURCES ${CMAKE_CURRENT_SOURCE_DIR})
+        mo2_add_translations(${TARGET} SOURCES ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
 
 	file(GLOB_RECURSE py_files CONFIGURE_DEPENDS *.py)
 	file(GLOB_RECURSE rc_files CONFIGURE_DEPENDS *.rc)
 	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS *.ui)
 
-	target_sources(${MO2_TARGET}
+	target_sources(${TARGET}
 		PRIVATE ${py_files} ${ui_files} ${rc_files} ${qm_files})
 
 endfunction()

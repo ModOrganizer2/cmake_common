@@ -4,23 +4,26 @@ include(CMakeParseArguments)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_targets.cmake)
 
-#! mo2_configure_target : do basic configuration for a MO2 target
+#! mo2_configure_target : do basic configuration for a MO2 C++ target
 #
 # this functions does many things:
 # - glob relevant files and add them to the target
 # - set many compile flags, definitions, etc.
 # - add step to create translations (if not turned OFF)
 #
+# \param:SOURCE_TREE if set, a source_group will be created using TREE
 # \param:WARNINGS enable all warnings (default ON)
 # \param:PERMISSIVE permissive mode (default OFF)
 # \param:BIGOBJ enable bigobj (default OFF)
 # \param:CLI enable C++/CLR (default OFF)
 # \param:TRANSLATIONS generate translations (default ON)
 # \param:AUTOMOC automoc (and autouic, autoqrc), (default ON)
-# \param:BOOST add boost includes or library (OFF, INC, LIB), (default OFF)
-# \param:EXTRA_TRANSLATIONS extra translations to include
+# \param:EXTRA_TRANSLATIONS extra translations to include (folder)
+# \param:PUBLIC_DEPENDS adds PUBLIC dependencies to the target, see
+#   mo2_add_dependencies for information on what is available
+# \param:PRIVATE_DEPENDS same a PUBLIC_DEPENDS, but link is PRIVATE instead of PUBLIC
 #
-function(mo2_configure_target MO2_TARGET)
+function(mo2_configure_target TARGET)
 	cmake_parse_arguments(MO2 "SOURCE_TREE"
 		"WARNINGS;PERMISSIVE;BIGOBJ;CLI;TRANSLATIONS;AUTOMOC"
 		"EXTRA_TRANSLATIONS;PUBLIC_DEPENDS;PRIVATE_DEPENDS"
@@ -39,11 +42,11 @@ function(mo2_configure_target MO2_TARGET)
 
 	if (${MO2_AUTOMOC})
 		find_package(Qt6 COMPONENTS Widgets REQUIRED)
-		set_target_properties(${MO2_TARGET}
+		set_target_properties(${TARGET}
 			PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
 	endif()
 
-	target_compile_options(${MO2_TARGET}
+	target_compile_options(${TARGET}
 		PRIVATE "/MP"
 		$<$<CONFIG:RelWithDebInfo>:/O2>
 	)
@@ -52,25 +55,25 @@ function(mo2_configure_target MO2_TARGET)
 	if (${MO2_CLI})
 		set(CXX_STANDARD 17)
 	endif()
-	set_target_properties(${MO2_TARGET} PROPERTIES
+	set_target_properties(${TARGET} PROPERTIES
 		CXX_STANDARD ${CXX_STANDARD}
 		CXX_EXTENSIONS OFF)
 
 	# VS emits a warning for LTCG, at least for uibase, so maybe not required?
-	target_link_options(${MO2_TARGET}
+	target_link_options(${TARGET}
 		PRIVATE
 		$<$<CONFIG:RelWithDebInfo>:/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF>)
 
 	if(${MO2_WARNINGS})
-		target_compile_options(${MO2_TARGET} PRIVATE "/Wall" "/wd4464")
+		target_compile_options(${TARGET} PRIVATE "/Wall" "/wd4464")
 	endif()
 
 	if(NOT ${MO2_PERMISSIVE})
-		target_compile_options(${MO2_TARGET} PRIVATE "/permissive-")
+		target_compile_options(${TARGET} PRIVATE "/permissive-")
 	endif()
 
 	if(${MO2_BIGOBJ})
-		target_compile_options(${MO2_TARGET} PRIVATE "/bigobj")
+		target_compile_options(${TARGET} PRIVATE "/bigobj")
 	endif()
 
 	# find source files
@@ -104,11 +107,11 @@ function(mo2_configure_target MO2_TARGET)
 
 
 	if(${MO2_TRANSLATIONS})
-		mo2_add_translations(${MO2_TARGET}
+		mo2_add_translations(${TARGET}
 			SOURCES ${CMAKE_CURRENT_SOURCE_DIR} ${MO2_EXTRA_TRANSLATIONS})
 	endif()
 
-	target_sources(${MO2_TARGET}
+	target_sources(${TARGET}
 		PRIVATE
 		${source_files}
 		${header_files}
@@ -127,7 +130,7 @@ function(mo2_configure_target MO2_TARGET)
 	)
 
 	target_compile_definitions(
-		${MO2_TARGET}
+		${TARGET}
 		PRIVATE
 		_UNICODE
 		UNICODE
@@ -145,7 +148,7 @@ function(mo2_configure_target MO2_TARGET)
 
     if(${MO2_CLI})
         if (CMAKE_GENERATOR MATCHES "Visual Studio")
-            set_target_properties(${MO2_TARGET} PROPERTIES COMMON_LANGUAGE_RUNTIME "")
+            set_target_properties(${TARGET} PROPERTIES COMMON_LANGUAGE_RUNTIME "")
         else()
 			# can this really happen?
             set(COMPILE_FLAGS "${COMPILE_FLAGS} /clr")
@@ -153,30 +156,33 @@ function(mo2_configure_target MO2_TARGET)
         endif()
     endif()
 
-	set_target_properties(${MO2_TARGET} PROPERTIES VS_STARTUP_PROJECT ${MO2_TARGET})
+	set_target_properties(${TARGET} PROPERTIES VS_STARTUP_PROJECT ${TARGET})
 
-	target_link_libraries(${MO2_TARGET} PRIVATE Version Dbghelp)
+	target_link_libraries(${TARGET} PRIVATE Version Dbghelp)
 
 	if (MO2_PUBLIC_DEPENDS)
-		mo2_add_dependencies(${MO2_TARGET} PUBLIC ${MO2_PUBLIC_DEPENDS})
+		mo2_add_dependencies(${TARGET} PUBLIC ${MO2_PUBLIC_DEPENDS})
 	endif()
 
 	if (MO2_PRIVATE_DEPENDS)
-		mo2_add_dependencies(${MO2_TARGET} PRIVATE ${MO2_PRIVATE_DEPENDS})
+		mo2_add_dependencies(${TARGET} PRIVATE ${MO2_PRIVATE_DEPENDS})
 	endif()
 
 	# set the VS startup project if not already set
 	get_property(startup_project DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT)
 
 	if (NOT startup_project)
-		set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${MO2_TARGET})
+		set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET})
 	endif()
 
 endfunction()
 
 #! mo2_configure_tests : configure a target as a MO2 C++ tests
 #
-# extra arguments are given to mo2_configure_target
+# this function creates a set of tests available in the ${TARET}_gtests variable
+#
+# extra arguments are given to mo2_configure_target, TRANSLATIONS and AUTOMOC are
+# OFF by default
 #
 function(mo2_configure_tests TARGET)
 	mo2_configure_target(${TARGET} TRANSLATIONS OFF AUTOMOC OFF ${ARGN})
@@ -211,22 +217,24 @@ endfunction()
 # this function does mostly nothing except calling mo2_configure_target, but is useful
 # to be consistent with other mo2_configure_XXX
 #
-function(mo2_configure_uibase MO2_TARGET)
-	if (NOT (${MO2_TARGET} STREQUAL "uibase"))
+function(mo2_configure_uibase TARGET)
+	if (NOT (${TARGET} STREQUAL "uibase"))
 		message(WARNING "mo2_configure_uibase() should only be used on the uibase target")
 	endif()
 
-	mo2_configure_target(${MO2_TARGET} ${ARGN})
-	set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "uibase")
+	mo2_configure_target(${TARGET} ${ARGN})
+	set_target_properties(${TARGET} PROPERTIES MO2_TARGET_TYPE "uibase")
 
-	target_include_directories(${MO2_TARGET} PUBLIC
+	target_include_directories(${TARGET} PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/game_features)
 
 	mo2_set_project_to_run_from_install(
-		${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
+		${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 endfunction()
 
 #! mo2_configure_plugin : configure a target as a MO2 C++ plugin
+#
+# this function automatically set uibase as a dependency
 #
 # extra arguments are given to mo2_configure_target
 #
@@ -240,52 +248,54 @@ function(mo2_configure_plugin TARGET)
 		${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 endfunction()
 
-#! mo2_configure_library : configure a C++ library (NOT a plugin)
+#! mo2_configure_library : configure a C++ library (NOT a plugin), can be a STATIC
+# or SHARED library
 #
-# extra arguments are given to mo2_configure_target
+# extra arguments are given to mo2_configure_target, TRANSLATIONS and AUTOMOC are
+# OFF by default
 #
-function(mo2_configure_library MO2_TARGET)
-	mo2_configure_target(${MO2_TARGET} AUTOMOC OFF TRANSLATIONS OFF ${ARGN})
+function(mo2_configure_library TARGET)
+	mo2_configure_target(${TARGET} AUTOMOC OFF TRANSLATIONS OFF ${ARGN})
 
-	get_target_property(TARGET_TYPE ${MO2_TARGET} TYPE)
+	get_target_property(TARGET_TYPE ${TARGET} TYPE)
 
-	target_include_directories(${MO2_TARGET}
+	target_include_directories(${TARGET}
 		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 	if (${TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
-		set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "library-static")
+		set_target_properties(${TARGET} PROPERTIES MO2_TARGET_TYPE "library-static")
 	else()
 		mo2_set_project_to_run_from_install(
-			${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
-		set_target_properties(${MO2_TARGET} PROPERTIES MO2_TARGET_TYPE "library-shared")
+			${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
+		set_target_properties(${TARGET} PROPERTIES MO2_TARGET_TYPE "library-shared")
 	endif()
 endfunction()
 
 #! mo2_configure_executable : configure a target as MO2 C++ executable
 #
+# \param:ELEVATED set flag on the executable to run as elevated by default
+#
 # extra arguments are given to mo2_configure_target
 #
-function(mo2_configure_executable MO2_TARGET)
+function(mo2_configure_executable TARGET)
 	cmake_parse_arguments(MO2 "ELEVATED" "" "" ${ARGN})
 
-	mo2_configure_target(${MO2_TARGET} ${ARGN})
-	set_target_properties(${MO2_TARGET}
-		PROPERTIES
-		WIN32_EXECUTABLE TRUE
-		MO2_TARGET_TYPE "executable")
+	mo2_configure_target(${TARGET} ${ARGN})
+	set_target_properties(${TARGET}
+		PROPERTIES WIN32_EXECUTABLE TRUE TARGET_TYPE "executable")
 
-	get_target_property(output_name ${MO2_TARGET} OUTPUT_NAME)
+	get_target_property(output_name ${TARGET} OUTPUT_NAME)
 	if("${output_name}" STREQUAL "output_name-NOTFOUND")
-		set(output_name ${MO2_TARGET})
+		set(output_name ${TARGET})
 	endif()
 
 	mo2_set_project_to_run_from_install(
-		${MO2_TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/${output_name})
+		${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/${output_name})
 
 	if (${MO2_ELEVATED})
 		# does not work with target_link_options, so keeping it that way for now... this
 		# is not a very used option anyway
-		set_target_properties(${MO2_TARGET} PROPERTIES LINK_FLAGS
+		set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
 			"/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\"")
 	endif()
 endfunction()
@@ -294,39 +304,45 @@ endfunction()
 #
 # for this to work properly, the target must have been configured
 #
-function(mo2_install_target MO2_TARGET)
+# \param:FOLDER install the plugin as a folder, instead of a single DLL, ignore for
+#   other target types
+# \param:INSTALLDIR installation directory, default is automatically deduced based on
+#   the target type, this parameter is ignored for plugins and static libraries
+#
+function(mo2_install_target TARGET)
 	cmake_parse_arguments(MO2 "FOLDER" "INSTALLDIR" "" ${ARGN})
 
 
-	get_target_property(MO2_TARGET_TYPE ${MO2_TARGET} MO2_TARGET_TYPE)
+	get_target_property(MO2_TARGET_TYPE ${TARGET} MO2_TARGET_TYPE)
 
 	# core install: .lib, .dll or .exe, to the right folder
 	if (${MO2_TARGET_TYPE} STREQUAL "uibase")
-		install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION bin)
-		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
+		mo2_set_if_not_defined(MO2_INSTALLDIR "bin")
+		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "plugin")
 		if (${MO2_FOLDER})
-			install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION bin/plugins/${MO2_TARGET})
+			install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins/${TARGET})
 		else()
-			install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION bin/plugins)
+			install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins)
 		endif()
-		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-static")
-		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-shared")
 		mo2_set_if_not_defined(MO2_INSTALLDIR "bin/dlls")
-		install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
-		install(TARGETS ${MO2_TARGET} ARCHIVE DESTINATION libs)
+		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "executable")
 		mo2_set_if_not_defined(MO2_INSTALLDIR "bin")
-		install(TARGETS ${MO2_TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
+		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
 	else()
-		message(ERROR "unknown MO2 target type for target '${MO2_TARGET}', did you forget using mo2_configure_XXX?")
+		message(ERROR "unknown MO2 target type for target '${TARGET}', did you forget using mo2_configure_XXX?")
 	endif()
 
 	# install PDB if possible
 	if (NOT (${MO2_TARGET_TYPE} STREQUAL "library-static"))
-		install(FILES $<TARGET_PDB_FILE:${MO2_TARGET}> DESTINATION pdb)
+		install(FILES $<TARGET_PDB_FILE:${TARGET}> DESTINATION pdb)
 	endif()
 
 endfunction()

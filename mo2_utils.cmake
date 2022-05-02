@@ -18,11 +18,11 @@ function (mo2_set_if_not_defined NAME VALUE)
 	endif()
 endfunction()
 
-#! mo2_set_project_to_run_from_install : set a PROJECT to run from a given executable
+#! mo2_set_project_to_run_from_install : set a target to run from a given executable
 #
-# this function only works for VS generator
+# this function is only meaningful for VS generator
 #
-# \param:PROJECT name of the project
+# \param:TARGET name of the target
 # \param:EXECUTABLE full path to the executable
 # \param:WORKDIR working directory (optional, default is the directory of the executable)
 #
@@ -34,7 +34,7 @@ function(mo2_set_project_to_run_from_install TARGET)
         get_filename_component(MO2_WORKDIR ${MO2_EXECUTABLE} DIRECTORY)
     endif()
 
-	set_target_properties(${MO2_TARGET} PROPERTIES
+	set_target_properties(${TARGET} PROPERTIES
 		VS_DEBUGGER_WORKING_DIRECTORY "${MO2_WORKDIR}"
 		VS_DEBUGGER_COMMAND "${MO2_EXECUTABLE}")
 endfunction()
@@ -66,7 +66,7 @@ endmacro()
 #
 # \param:NAME name of the group
 # \param:FILES files to add
-# \param:GROUPS files to add
+# \param:GROUPS basename to add, e.g., "foo" will add "foo.cpp", "foo.h" and "foo.inc"
 #
 function(mo2_add_filter)
 	cmake_parse_arguments(PARSE_ARGV 0 add_filter "" "NAME" "FILES;GROUPS")
@@ -81,7 +81,11 @@ function(mo2_add_filter)
 	source_group(${filter_name} FILES ${files})
 endfunction()
 
-#! mo2_find_qt_version : try to deduce Qt version from variables
+#! mo2_find_qt_version : try to deduce Qt version from QT_ROOT variable
+#
+# this function caches the given variable
+#
+# \param:VAR name of the variable to store the version into
 #
 function(mo2_find_qt_version VAR)
 
@@ -157,11 +161,11 @@ function(mo2_deploy_qt)
 	endif()
 endfunction()
 
-#! generate .ts files from the given sources
+#! mo2_add_lupdate : generate .ts files from the given sources
 #
 # this function adds a ${TARGET}_lupdate target
 #
-# \param:TARGET target to generate releases for
+# \param:TARGET target to generate lupdate for
 # \param:TS_FILE .ts file to generate
 # \param:SOURCES source folders to generate .ts file from
 #
@@ -214,29 +218,29 @@ function(mo2_add_lupdate TARGET)
 		DEPENDS ${translation_files}
 		VERBATIM)
 
-	add_custom_target("${MO2_TARGET}_lupdate" DEPENDS ${MO2_TS_FILE})
+	add_custom_target("${TARGET}_lupdate" DEPENDS ${MO2_TS_FILE})
 
 	# we need to set this property otherwise there is an issue with C# projects
 	# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
 	# packages on these target but fails because there are obviously none
 	#
 	# we also "hide" the target by moving them to autogen
-	set_target_properties(${MO2_TARGET}_lupdate PROPERTIES
+	set_target_properties(${TARGET}_lupdate PROPERTIES
 		VS_GLOBAL_ResolveNugetPackages False
 		FOLDER autogen)
 
 endfunction()
 
-#! generate .ts files from the given sources
+#! mo2_add_lrelease : generate .ts files from the given sources
 #
 # this function adds a ${TARGET}_lrelease target
 #
-# \param:INSTALL if set, QM files will be installed to bin/translations
 # \param:TARGET target to generate releases for
+# \param:INSTALL if set, QM files will be installed to bin/translations
 # \param:QM_FILE .qm file to generate
 # \param:TS_FILES source ts
 #
-function(mo2_add_lrelease MO2_TARGET)
+function(mo2_add_lrelease TARGET)
 	cmake_parse_arguments(MO2 "INSTALL" "QM_FILE" "TS_FILES" ${ARGN})
 
 	add_custom_command(OUTPUT ${MO2_QM_FILE}
@@ -245,14 +249,14 @@ function(mo2_add_lrelease MO2_TARGET)
 		DEPENDS "${MO2_TS_FILES}"
 		VERBATIM)
 
-	add_custom_target("${MO2_TARGET}_lrelease" DEPENDS ${MO2_QM_FILE})
+	add_custom_target("${TARGET}_lrelease" DEPENDS ${MO2_QM_FILE})
 
 	# we need to set this property otherwise there is an issue with C# projects
 	# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
 	# packages on these target but fails because there are obviously none
 	#
 	# we also "hide" the target by moving them to autogen
-	set_target_properties(${MO2_TARGET}_lrelease PROPERTIES
+	set_target_properties(${TARGET}_lrelease PROPERTIES
 		VS_GLOBAL_ResolveNugetPackages False
 		FOLDER autogen)
 
@@ -262,6 +266,18 @@ function(mo2_add_lrelease MO2_TARGET)
 
 endfunction()
 
+
+#! mo2_add_translations : generate translation files
+#
+# this function is a wrapper around mo2_add_lupdate and mo2_add_lrelease
+#
+# \param:TARGET target to generate translations for
+# \param:RELEASE if set, will use mo2_add_lrelease to generate .qm files
+# \param:INSTALL_RELEASE if true, will install generated .qm files (force RELEASE)
+# \param:TS_FILE intermediate .ts file to generate
+# \param:QM_FILE file .qm file to generate if RELEASE or INSTALL_RELEASE is set
+# \param:SOURCES source directories to look for translations, send to mo2_add_lupdate
+#
 function(mo2_add_translations TARGET)
 	cmake_parse_arguments(MO2 "RELEASE;INSTALL_RELEASE" "TS_FILE;QM_FILE" "SOURCES" ${ARGN})
 

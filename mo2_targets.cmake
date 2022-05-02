@@ -5,11 +5,13 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 #! mo2_add_dependencies : add dependencies to the given target
 #
-# the name of the dependencies should be valid mo2 "libraries", as per
-# mo2_find_libraries, or "boost" (for include only) or "boost::XXX" for a specific
-# boost component or Qt::XXX for a specific Qt component
+# the name of the dependencies should be:
+# - valid mo2 "libraries", as per mo2_find_libraries,
+# - boost (for header-only Boost libraries) or "boost::XXX" for specific Boost
+#   components
+# - or Qt::XXX for Qt components
 #
-function(mo2_add_dependencies MO2_TARGET PRIVATE_OR_PUBLIC)
+function(mo2_add_dependencies TARGET PRIVATE_OR_PUBLIC)
 
 	# remove everything boost related
 	set(standard_deps ${ARGN})
@@ -30,7 +32,7 @@ function(mo2_add_dependencies MO2_TARGET PRIVATE_OR_PUBLIC)
 	mo2_find_libraries(${standard_deps})
 	list(TRANSFORM standard_deps REPLACE "^(.+)$" "mo2::\\1")
 	message(DEBUG "standard: ${standard_deps}")
-	target_link_libraries(${MO2_TARGET} ${PRIVATE_OR_PUBLIC} ${standard_deps})
+	target_link_libraries(${TARGET} ${PRIVATE_OR_PUBLIC} ${standard_deps})
 
 	# handle Qt dependencies
 	if (qt_deps)
@@ -40,14 +42,14 @@ function(mo2_add_dependencies MO2_TARGET PRIVATE_OR_PUBLIC)
 
 		# add QtX:: for target ink
 		list(TRANSFORM qt_deps REPLACE "^(.+)$" "Qt${QT_MAJOR_VERSION}::\\1")
-		target_link_libraries(${MO2_TARGET} ${PRIVATE_OR_PUBLIC} ${qt_deps})
+		target_link_libraries(${TARGET} ${PRIVATE_OR_PUBLIC} ${qt_deps})
 	endif()
 
 	# handle boost dependencies
 	if (boost_deps)
 		find_package(Boost REQUIRED)
 		target_include_directories(
-			${MO2_TARGET} ${PRIVATE_OR_PUBLIC} ${Boost_INCLUDE_DIRS})
+			${TARGET} ${PRIVATE_OR_PUBLIC} ${Boost_INCLUDE_DIRS})
 
 		list(TRANSFORM boost_deps REPLACE "boost(::)?" "")
 		list(FILTER boost_deps EXCLUDE REGEX "^$")
@@ -56,12 +58,15 @@ function(mo2_add_dependencies MO2_TARGET PRIVATE_OR_PUBLIC)
         if (boost_deps)
     		find_package(Boost COMPONENTS ${boost_deps} REQUIRED)
 	    	message(DEBUG "boost: ${Boost_LIBRARIES}")
-		    target_link_libraries(${MO2_TARGET} ${PRIVATE_OR_PUBLIC} ${Boost_LIBRARIES})
+		    target_link_libraries(${TARGET} ${PRIVATE_OR_PUBLIC} ${Boost_LIBRARIES})
         endif()
 	endif()
 endfunction()
 
 #! mo2_find_uibase : find and create a mo2::uibase target
+#
+# if a 'uibase' target already exists, makes an alias as 'mo2::uibase', otherwise
+# creates an imported target
 #
 function(mo2_find_uibase)
 
@@ -95,6 +100,7 @@ endfunction()
 
 #! mo2_find_corelib : find a static core library, e.g., bsatk or esptk, and create
 # an appropriate target
+#
 function(mo2_find_corelib LIBRARY)
     cmake_parse_arguments(MO2 "" "" "DEPENDS" ${ARGN})
 
@@ -406,30 +412,17 @@ function(mo2_find_usvfs)
 
 endfunction()
 
-#! mo2_find_libraries : find and create library
+#! mo2_find_libraries : find and create libraries to link to
 #
-# this function find the given libraries and generate (if the libraries are found)
-# targets mo2::LIBRARY_NAME
+# this function tries to find the given libraries and generates (if the libraries are
+# found) targets mo2::LIBRARY_NAME for each library found
 #
-# example: mo2_find_libraries(uibase, loot) will create mo2::uibase and mo2::loot
+# example: mo2_find_libraries(uibase loot) will create mo2::uibase and mo2::loot
+#
+# available libraries are the ones with mo2_find_XXX functions
 #
 function(mo2_find_libraries)
     foreach(target ${ARGN})
         cmake_language(CALL "mo2_find_${target}")
     endforeach()
-endfunction()
-
-#! mo2_target_add_boost : add boosts to the given target
-#
-# with only target name, include boost directories, extra names are considered
-# boost components
-#
-function(mo2_target_add_boost MO2_TARGET)
-    find_package(Boost COMPONENTS ${ARGN} REQUIRED)
-
-    target_include_directories(${MO2_TARGET} PRIVATE ${Boost_INCLUDE_DIRS})
-
-    if (${ARGN})
-        target_link_libraries(${MO2_TARGET} PRIVATE ${Boost_LIBRARIES})
-    endif()
 endfunction()
