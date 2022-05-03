@@ -183,6 +183,9 @@ function(mo2_add_lupdate TARGET)
 		set(is_cpp False)
 	endif()
 
+	# we glob the source files for Python plugins to avoid duplicate string in .ui and
+	# .py, for C++, we will directly use MO2_SOURCES (using translation_files broke
+	# the modorganizer build, probably because there are too many sources?)
 	foreach (SOURCE ${MO2_SOURCES})
 		if (${is_cpp})
 			file(GLOB_RECURSE source_sources CONFIGURE_DEPENDS
@@ -208,15 +211,15 @@ function(mo2_add_lupdate TARGET)
 	message(TRACE "TS_FILE: ${MO2_TS_FILE}, SOURCES: ${MO2_SOURCES}, FILES: ${translation_files}")
 
 	if (${is_cpp})
-		set(lrelease_command ${QT_ROOT}/bin/lupdate)
-		set(lrelease_args ${translation_files} -ts ${MO2_TS_FILE})
+		set(lupdate_command ${QT_ROOT}/bin/lupdate)
+		set(lupdate_args ${MO2_SOURCES} -ts ${MO2_TS_FILE})
 	else()
-		set(lrelease_command ${PYTHON_ROOT}/PCbuild/amd64/python.exe)
-		set(lrelease_args -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${MO2_TS_FILE}" ${translation_files})
+		set(lupdate_command ${PYTHON_ROOT}/PCbuild/amd64/python.exe)
+		set(lupdate_args -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${MO2_TS_FILE}" ${translation_files})
 	endif()
 
 	add_custom_command(OUTPUT ${MO2_TS_FILE}
-		COMMAND ${lrelease_command} ARGS ${lrelease_args}
+		COMMAND ${lupdate_command} ARGS ${lupdate_args}
 		DEPENDS ${translation_files}
 		VERBATIM)
 
