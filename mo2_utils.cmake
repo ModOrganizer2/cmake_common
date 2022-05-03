@@ -189,7 +189,8 @@ function(mo2_add_lupdate TARGET)
 				${SOURCE}/*.cpp
 				${SOURCE}/*.h)
 		else()
-			file(GLOB_RECURSE source_sources CONFIGURE_DEPENDS ${SOURCE}/*.py)
+			file(GLOB_RECURSE source_sources CONFIGURE_DEPENDS
+				${SOURCE}/*.py)
 		endif()
 
 		# ui files
@@ -208,9 +209,10 @@ function(mo2_add_lupdate TARGET)
 
 	if (${is_cpp})
 		set(lrelease_command ${QT_ROOT}/bin/lupdate)
-		set(lrelease_args ${MO2_SOURCES} -ts ${MO2_TS_FILE})
+		set(lrelease_args ${translation_files} -ts ${MO2_TS_FILE})
 	else()
-
+		set(lrelease_command ${PYTHON_ROOT}/PCbuild/amd64/python.exe)
+		set(lrelease_args -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${MO2_TS_FILE}" ${translation_files})
 	endif()
 
 	add_custom_command(OUTPUT ${MO2_TS_FILE}
