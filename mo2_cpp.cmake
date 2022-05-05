@@ -64,8 +64,13 @@ function(mo2_configure_target TARGET)
 		PRIVATE
 		$<$<CONFIG:RelWithDebInfo>:/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF>)
 
-	if(${MO2_WARNINGS})
-		target_compile_options(${TARGET} PRIVATE "/Wall" "/wd4464")
+	if (${MO2_WARNINGS} STREQUAL "ON")
+		set(MO2_WARNINGS "All")
+	endif()
+
+	if(NOT (${MO2_WARNINGS} STREQUAL "OFF"))
+		string(TOLOWER ${MO2_WARNINGS} MO2_WARNINGS)
+		target_compile_options(${TARGET} PRIVATE "/W${MO2_WARNINGS}" "/wd4464")
 	endif()
 
 	if(NOT ${MO2_PERMISSIVE})
