@@ -12,7 +12,10 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_targets.cmake)
 # - add step to create translations (if not turned OFF)
 #
 # \param:SOURCE_TREE if set, a source_group will be created using TREE
-# \param:WARNINGS enable all warnings (default ON)
+# \param:WARNINGS enable all warnings, possible values are ON/All, OFF, or 1, 2, 3, 4
+#    for corresponding /W flags (ON is All) (default ON)
+# \param:EXTERNAL_WARNINGS enable warnings for external libraries, possible values are
+#   the same as warnings, but ON is 3 (default 1)
 # \param:PERMISSIVE permissive mode (default OFF)
 # \param:BIGOBJ enable bigobj (default OFF)
 # \param:CLI enable C++/CLR (default OFF)
@@ -25,12 +28,13 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_targets.cmake)
 #
 function(mo2_configure_target TARGET)
 	cmake_parse_arguments(MO2 "SOURCE_TREE"
-		"WARNINGS;PERMISSIVE;BIGOBJ;CLI;TRANSLATIONS;AUTOMOC"
+		"WARNINGS;EXTERNAL_WARNINGS;PERMISSIVE;BIGOBJ;CLI;TRANSLATIONS;AUTOMOC"
 		"EXTRA_TRANSLATIONS;PUBLIC_DEPENDS;PRIVATE_DEPENDS"
 		${ARGN})
 
 	# configure parameters and compiler flags
 	mo2_set_if_not_defined(MO2_WARNINGS ON)
+	mo2_set_if_not_defined(MO2_EXTERNAL_WARNINGS 1)
 	mo2_set_if_not_defined(MO2_PERMISSIVE OFF)
 	mo2_set_if_not_defined(MO2_BIGOBJ OFF)
 	mo2_set_if_not_defined(MO2_CLI OFF)
@@ -68,9 +72,23 @@ function(mo2_configure_target TARGET)
 		set(MO2_WARNINGS "All")
 	endif()
 
+	if (${MO2_EXTERNAL_WARNINGS} STREQUAL "ON")
+		set(MO2_EXTERNAL_WARNINGS "3")
+	endif()
+
 	if(NOT (${MO2_WARNINGS} STREQUAL "OFF"))
 		string(TOLOWER ${MO2_WARNINGS} MO2_WARNINGS)
 		target_compile_options(${TARGET} PRIVATE "/W${MO2_WARNINGS}" "/wd4464")
+
+		# external warnings
+		if (${MO2_EXTERNAL_WARNINGS} STREQUAL "OFF")
+			target_compile_options(${TARGET}
+				PRIVATE "/external:anglebrackets" "/external:W0")
+		else()
+			string(TOLOWER ${MO2_EXTERNAL_WARNINGS} MO2_EXTERNAL_WARNINGS)
+			target_compile_options(${TARGET}
+				PRIVATE "/external:anglebrackets" "/external:W${MO2_EXTERNAL_WARNINGS}")
+		endif()
 	endif()
 
 	if(NOT ${MO2_PERMISSIVE})
