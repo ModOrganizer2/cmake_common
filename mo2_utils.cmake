@@ -150,6 +150,36 @@ function(mo2_deploy_qt)
 		file(REMOVE_RECURSE \"${bin}/dlls/tls\")
 	")
 
+	# === Begin Qt6 Fix ===
+
+	# until there is a cleaner way to do this with windqtdeploy?
+
+	# subfolder of QtQuick
+	set(qt6_qtquick_to_remove "")
+	list(APPEND qt6_qtquick_to_remove
+		Controls Dialogs Layouts LocalStorage NativeStyle Particles Pdf Scene2D
+		Scene3D Shapes Templates Timeline tooling VirtualKeyboard Window)
+
+	set(qt6_qtdlls_to_remove "")
+	list(APPEND qt6_qtdlls_to_remove
+		3DAnimation 3DCore 3DExtras 3DInput 3DLogic 3DQuickScene2D 3DRender
+		Pdf PdfQuick QmlLocalStorage QmlXmlListModel QuickControls2 QuickControls2Impl
+		QuickDialogs2 QuickDialogs2QuickImpl QuickDialogs2Utils QuickLayouts QuickParticles
+		QuickShapes QuickTemplates2 QuickTimeline Sql StateMachine StateMachineQml VirtualKeyboard)
+
+	set(removals "")
+	foreach (qt6_qtquick_removal ${qt6_qtquick_to_remove})
+		set(removals "${removals}
+			file(REMOVE_RECURSE \"${bin}/QtQuick/${qt6_qtquick_removal}\")")
+	endforeach()
+	foreach (qt6_dll_removal ${qt6_qtdlls_to_remove})
+		set(removals "${removals}
+			file(REMOVE \"${bin}/dlls/Qt6${qt6_dll_removal}.dll\")")
+	endforeach()
+	install(CODE "${removals}")
+
+	# === End Qt6 Fix ===
+
 	if(NOT ${DEPLOY_NOPLUGINS})
 		install(CODE "
 			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
