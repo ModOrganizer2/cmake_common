@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 if (DEFINED MO2_INCLUDED)
 	return()
@@ -35,7 +35,10 @@ list(GET QT_VERSION_LIST 0 QT_MAJOR_VERSION)
 set(ENV{PATH} "${QT_ROOT}/bin;$ENV{PATH}")
 
 # custom property, used to keep track of the type of target
-define_property(TARGET PROPERTY MO2_TARGET_TYPE INHERITED)
+define_property(
+	TARGET PROPERTY MO2_TARGET_TYPE INHERITED
+	BRIEF_DOCS  "Target type for MO2 C++ target."
+	FULL_DOCS "Automatically set when using mo2_configure_XXX functions.")
 
 set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_STATIC_LIBS ON)
