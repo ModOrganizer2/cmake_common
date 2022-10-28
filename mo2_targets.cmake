@@ -334,6 +334,19 @@ function(mo2_find_lz4)
 
 endfunction()
 
+#! mo2_find_lzokay : find and create a mo2::lzokay target
+#
+function(mo2_find_lzokay)
+    if (TARGET mo2-lzokay)
+        return()
+    endif()
+
+    find_package(lzokay REQUIRED)
+    add_library(mo2-lzokay ALIAS lzokay::lzokay)
+    add_library(mo2::lzokay ALIAS lzokay::lzokay)
+
+endfunction()
+
 #! mo2_find_7z : find and carete a mo2::7z target
 #
 function(mo2_find_7z)
