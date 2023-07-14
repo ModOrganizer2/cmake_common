@@ -330,7 +330,7 @@ function(mo2_install_plugin TARGET)
 	if (${MO2_FOLDER})
 		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/plugins/$<TARGET_FILE_BASE_NAME:${TARGET}>)
 	else()
-		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/plugins)
+		install(TARGETS ${TARGET} RUNTIME DESTINATION bin/extensions/${CMAKE_PROJECT_NAME}/plugins)
 	endif()
 
 	if (NOT MO2_INSTALL_IS_BIN)
