@@ -327,12 +327,7 @@ endfunction()
 function(mo2_install_plugin TARGET)
 	cmake_parse_arguments(MO2 "FOLDER" "" "" ${ARGN})
 
-	if (${MO2_FOLDER})
-		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/plugins/$<TARGET_FILE_BASE_NAME:${TARGET}>)
-	else()
-		install(TARGETS ${TARGET} RUNTIME DESTINATION bin/extensions/${CMAKE_PROJECT_NAME}/plugins)
-	endif()
-
+	install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/extensions/${MO2_EXTENSION_ID}/plugins)
 	if (NOT MO2_INSTALL_IS_BIN)
 		install(TARGETS ${TARGET} ARCHIVE DESTINATION lib)
 		# install PDB if possible
