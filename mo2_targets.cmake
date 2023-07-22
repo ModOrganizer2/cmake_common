@@ -5,6 +5,8 @@ if (POLICY CMP0144)
 endif()
 
 include(FetchContent)
+include(ExternalProject)
+
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 #! mo2_add_dependencies : add dependencies to the given target
