@@ -233,7 +233,7 @@ function(mo2_configure_python_module TARGET)
 			FILES "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
 	endif()
 
-    set(install_dir "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}")
+    set(install_dir "${MO2_INSTALL_PATH}/bin/extensions/${MO2_EXTENSION_ID}/plugins/${TARGET}")
 
 	# directories that go in bin/plugins/${name}
 	install(

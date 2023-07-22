@@ -51,6 +51,7 @@ set_property(GLOBAL PROPERTY AUTORCC_SOURCE_GROUP autogen)
 
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_cpp.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_python.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/mo2_extension.cmake)
 
 # mark as included
 set(MO2_DEFINED true)
