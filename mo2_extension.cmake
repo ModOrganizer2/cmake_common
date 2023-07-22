@@ -21,5 +21,5 @@ function(mo2_configure_extension)
     set(MO2_EXTENSION_ID ${extension_identifier} PARENT_SCOPE)
 
     install(FILES ${METADATA_FILE}
-        DESTINATION bin/extensions/${CMAKE_PROJECT_NAME}/)
+        DESTINATION bin/extensions/${extension_identifier}/)
 endfunction()
