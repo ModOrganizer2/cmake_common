@@ -321,7 +321,7 @@ function(mo2_add_translations TARGET)
 	endif()
 
 	if (NOT MO2_QM_FILE)
-		set(MO2_QM_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.qm)
+		set(MO2_QM_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_en.qm)
 	endif()
 
 	# force release with install

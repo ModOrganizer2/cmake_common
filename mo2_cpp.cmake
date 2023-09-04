@@ -131,6 +131,7 @@ function(mo2_configure_target TARGET)
 
 	if(${MO2_TRANSLATIONS})
 		mo2_add_translations(${TARGET}
+		    INSTALL_RELEASE
 			SOURCES ${CMAKE_CURRENT_SOURCE_DIR} ${MO2_EXTRA_TRANSLATIONS})
 	endif()
 
