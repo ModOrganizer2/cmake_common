@@ -205,7 +205,7 @@ function(mo2_find_gamebryo)
         target_include_directories(mo2-gamebryo
             INTERFACE ${MO2_SUPER_PATH}/game_gamebryo/src/gamebryo)
 
-        mo2_add_dependencies(mo2-gamebryo INTERFACE lz4)
+        mo2_add_dependencies(mo2-gamebryo INTERFACE zlib lz4)
 
         add_library(mo2::gamebryo ALIAS mo2-gamebryo)
     endif()
