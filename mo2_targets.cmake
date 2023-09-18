@@ -4,7 +4,7 @@ if (POLICY CMP0144)
     cmake_policy(SET CMP0144 NEW)
 endif()
 
-include(ExternalProject)
+include(FetchContent)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
 #! mo2_add_dependencies : add dependencies to the given target
@@ -367,28 +367,25 @@ function(mo2_find_fmt)
 
 endfunction()
 
-#! mo2_find_cpptoml : find and create a mo2::cpptoml target
+#! mo2_find_tomlplusplus : find and create a mo2::tomlplusplus target
 #
-function(mo2_find_cpptoml)
-    if (TARGET mo2-cpptoml)
+function(mo2_find_tomlplusplus)
+    if (TARGET mo2-tomlplusplus)
         return()
     endif()
 
-    ExternalProject_Add(
-        cpptoml
-        PREFIX "external"
-        URL "https://github.com/skystrife/cpptoml/archive/2051836a96a25e5a2d5283be7f633a157848f15e.tar.gz"
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND "")
+    FetchContent_Declare(
+        tomlplusplus
+        URL "https://github.com/marzer/tomlplusplus/archive/v3.2.0.tar.gz"
+        URL_HASH "SHA256=aeba776441df4ac32e4d4db9d835532db3f90fd530a28b74e4751a2915a55565"
+    )
+    FetchContent_MakeAvailable(tomlplusplus)
 
-    ExternalProject_Get_Property(cpptoml SOURCE_DIR)
+    add_library(mo2-tomlplusplus INTERFACE)
+    target_include_directories(mo2-tomlplusplus INTERFACE "${tomlplusplus_SOURCE_DIR}/include")
+    add_dependencies(mo2-tomlplusplus tomlplusplus)
 
-    add_library(mo2-cpptoml INTERFACE)
-    target_include_directories(mo2-cpptoml INTERFACE "${SOURCE_DIR}/include")
-    add_dependencies(mo2-cpptoml cpptoml)
-
-    add_library(mo2::cpptoml ALIAS mo2-cpptoml)
+    add_library(mo2::tomlplusplus ALIAS mo2-tomlplusplus)
 
 endfunction()
 
