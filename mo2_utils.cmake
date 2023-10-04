@@ -242,7 +242,7 @@ function(mo2_add_lupdate TARGET)
 
 	if (${is_cpp})
 		set(lupdate_command ${QT_ROOT}/bin/lupdate)
-		set(lupdate_args ${MO2_SOURCES} -ts ${MO2_TS_FILE})
+		set(lupdate_args ${MO2_SOURCES} -extensions cpp,h,ui,js,qml,qrc -ts ${MO2_TS_FILE})
 	else()
 		set(lupdate_command ${PYTHON_ROOT}/PCbuild/amd64/python.exe)
 		set(lupdate_args -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${MO2_TS_FILE}" ${translation_files})
