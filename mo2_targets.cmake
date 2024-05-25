@@ -94,7 +94,7 @@ function(mo2_find_uibase)
         set_target_properties(mo2-uibase PROPERTIES
             IMPORTED_IMPLIB ${MO2_INSTALL_LIBS_PATH}/uibase.lib)
         mo2_add_dependencies(mo2-uibase
-            INTERFACE fmt Qt::Widgets Qt::Network Qt::QuickWidgets)
+            INTERFACE Qt::Widgets Qt::Network Qt::QuickWidgets)
         target_include_directories(mo2-uibase
             INTERFACE ${MO2_UIBASE_INCLUDE} ${MO2_UIBASE_INCLUDE}/game_features)
         add_library(mo2::uibase ALIAS mo2-uibase)
@@ -351,19 +351,6 @@ function(mo2_find_7z)
     target_include_directories(mo2-7z INTERFACE ${SEVENZ_ROOT}/CPP)
 
     add_library(mo2::7z ALIAS mo2-7z)
-
-endfunction()
-
-#! mo2_find_fmt : find and carete a mo2::fmt target
-#
-function(mo2_find_fmt)
-    if (TARGET mo2-fmt)
-        return()
-    endif()
-
-    find_package(fmt REQUIRED)
-    add_library(mo2-fmt ALIAS fmt::fmt)
-    add_library(mo2::fmt ALIAS fmt::fmt)
 
 endfunction()
 
