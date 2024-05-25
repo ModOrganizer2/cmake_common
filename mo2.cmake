@@ -9,7 +9,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 # setup path for find_package(), etc.
 mo2_required_variable(NAME BOOST_ROOT TYPE PATH)
 mo2_required_variable(NAME QT_ROOT TYPE PATH)
-mo2_required_variable(NAME FMT_ROOT TYPE PATH)
 mo2_required_variable(NAME PYTHON_ROOT TYPE PATH)
 mo2_required_variable(NAME CMAKE_INSTALL_PREFIX TYPE PATH)
 
@@ -21,7 +20,6 @@ get_filename_component(MO2_INSTALL_LIBS_PATH "${MO2_INSTALL_PATH}/libs" REALPATH
 
 list(APPEND CMAKE_PREFIX_PATH
 	${QT_ROOT}/lib/cmake
-	${FMT_ROOT}/build
 	${BOOST_ROOT}/build
 	${MO2_BUILD_PATH}/googletest/build/lib/cmake/GTest)
 
