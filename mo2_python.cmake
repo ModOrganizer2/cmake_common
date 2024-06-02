@@ -176,6 +176,7 @@ function(mo2_python_requirements TARGET)
 	install(
 		DIRECTORY "${MO2_LIBDIR}"
 		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}/"
+		PATTERN "__pycache__" EXCLUDE
 	)
 
 endfunction()
