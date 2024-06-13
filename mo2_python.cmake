@@ -16,6 +16,8 @@ function(mo2_python_uifiles TARGET)
 		return()
 	endif()
 
+	mo2_find_python_executable(PYTHON_EXE)
+
 	message(DEBUG "generating .py from ui files: ${MO2_FILES}")
 
 	set(pyui_files "")
@@ -30,7 +32,7 @@ function(mo2_python_uifiles TARGET)
 		set(output "${folder}/${name}.py")
 		add_custom_command(
 			OUTPUT "${output}"
-			COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+			COMMAND ${PYTHON_EXE}
 				-I
 				-m PyQt${QT_MAJOR_VERSION}.uic.pyuic
 				-o "${output}"
@@ -68,6 +70,8 @@ function(mo2_python_rcfiles TARGET)
 		return()
 	endif()
 
+	mo2_find_python_executable(PYTHON_EXE)
+
 	message(DEBUG "generating .py from qrc files: ${MO2_FILES}")
 
 	set(pyrc_files "")
@@ -84,7 +88,7 @@ function(mo2_python_rcfiles TARGET)
 		set(output "${folder}/${name}_rc.py")
 		add_custom_command(
 			OUTPUT "${output}"
-			COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+			COMMAND ${PYTHON_EXE}
 				-I
 				-m PyQt5.pyrcc_main
 				-o "${output}"
@@ -121,12 +125,14 @@ function(mo2_python_pip_install TARGET)
 		message(FATAL_ERROR "must specified a DIRECTORY for pip install")
 	endif()
 
+	mo2_find_python_executable(PYTHON_EXE)
+
 	string(MAKE_C_IDENTIFIER "${MO2_PACKAGES}" PIP_FILE_LOG)
 	set(pip_log_file "${CMAKE_CURRENT_BINARY_DIR}/${PIP_FILE_LOG}.log")
 
 	add_custom_command(
 		OUTPUT "${pip_log_file}"
-		COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+		COMMAND ${PYTHON_EXE}
 				-I
 				-m pip
 				install --force --upgrade --disable-pip-version-check
@@ -153,9 +159,10 @@ endfunction()
 function(mo2_python_requirements TARGET)
 	cmake_parse_arguments(MO2 "" "LIBDIR" "" ${ARGN})
 
+	mo2_find_python_executable(PYTHON_EXE)
 	add_custom_command(
 		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pip.log"
-		COMMAND ${PYTHON_ROOT}/PCbuild/amd64/python.exe
+		COMMAND ${PYTHON_EXE}
 				-I
 				-m pip
 				install --force --upgrade --disable-pip-version-check
