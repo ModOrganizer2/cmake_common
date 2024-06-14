@@ -18,6 +18,17 @@ function (mo2_set_if_not_defined NAME VALUE)
 	endif()
 endfunction()
 
+#! mo2_find_python_executable : find the full path to the Python executable
+#
+# \param:VARNAME name of the variable that will contain the path to Python
+function(mo2_find_python_executable VARNAME)
+	if (EXISTS "${PYTHON_ROOT}/PCbuild/amd64/python_d.exe")
+		set(${VARNAME} "${PYTHON_ROOT}/PCbuild/amd64/python_d.exe" PARENT_SCOPE)
+	else()
+		set(${VARNAME} "${PYTHON_ROOT}/PCbuild/amd64/python.exe" PARENT_SCOPE)
+	endif()
+endfunction()
+
 #! mo2_set_project_to_run_from_install : set a target to run from a given executable
 #
 # this function is only meaningful for VS generator
@@ -244,7 +255,8 @@ function(mo2_add_lupdate TARGET)
 		set(lupdate_command ${QT_ROOT}/bin/lupdate)
 		set(lupdate_args ${MO2_SOURCES} -ts ${MO2_TS_FILE})
 	else()
-		set(lupdate_command ${PYTHON_ROOT}/PCbuild/amd64/python.exe)
+		mo2_find_python_executable(PYTHON_EXE)
+		set(lupdate_command ${PYTHON_EXE})
 		set(lupdate_args -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${MO2_TS_FILE}" ${translation_files})
 	endif()
 
