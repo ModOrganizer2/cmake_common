@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 
 if (POLICY CMP0144)
     cmake_policy(SET CMP0144 NEW)
@@ -223,6 +223,7 @@ function(mo2_configure_tests TARGET)
 
 	find_package(GTest REQUIRED)
 	target_link_libraries(${TARGET} PRIVATE GTest::gtest GTest::gmock GTest::gtest_main)
+	mo2_add_dependencies(${TARGET} PRIVATE ${MO2_DEPENDS})
 
 	# gtest_discover_tests would be nice but it requires Qt DLL, uibase, etc., in the
 	# path, etc., and is not working right now
@@ -236,20 +237,18 @@ function(mo2_configure_tests TARGET)
 	# )
 	#
 
-	set(extra_paths "${MO2_INSTALL_PATH}/bin/dlls")
-	foreach (DEPEND ${MO2_DEPENDS})
-		target_link_libraries(${TARGET} PUBLIC ${DEPEND})
-		string(APPEND extra_paths "\\;$<TARGET_FILE_DIR:${DEPEND}>")
-	endforeach()
-
 	gtest_add_tests(TARGET ${TARGET} TEST_LIST ${TARGET}_gtests)
 	set(${TARGET}_gtests ${${TARGET}_gtests} PARENT_SCOPE)
 
+	mo2_deploy_qt_for_tests(
+		TARGET ${TARGET}
+		BINARIES "$<FILTER:$<TARGET_RUNTIME_DLLS:${TARGET}>,EXCLUDE,^.*[/\\]Qt[^/\\]*[.]dll>")
+
 	set_tests_properties(${${TARGET}_gtests}
 		PROPERTIES
-		WORKING_DIRECTORY "${MO2_INSTALL_PATH}/bin"
 		ENVIRONMENT_MODIFICATION
-		"PATH=path_list_prepend:${extra_paths}")
+		"PATH=path_list_prepend:$<JOIN:$<TARGET_RUNTIME_DLL_DIRS:${TARGET}>,\;>"
+	)
 endfunction()
 
 #! mo2_configure_uibase : configure the uibase target for MO2
