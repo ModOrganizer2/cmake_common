@@ -275,6 +275,7 @@ function(mo2_find_spdlog)
     mo2_required_variable(NAME SPDLOG_ROOT TYPE PATH)
 
     add_library(mo2-spdlog INTERFACE)
+    target_compile_definitions(mo2-spdlog INTERFACE SPDLOG_USE_STD_FORMAT)
     target_include_directories(mo2-spdlog INTERFACE ${SPDLOG_ROOT}/include)
     add_library(mo2::spdlog ALIAS mo2-spdlog)
 
