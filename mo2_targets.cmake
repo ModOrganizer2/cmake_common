@@ -92,7 +92,8 @@ function(mo2_find_uibase)
 
         add_library(mo2-uibase IMPORTED SHARED)
         set_target_properties(mo2-uibase PROPERTIES
-            IMPORTED_IMPLIB ${MO2_INSTALL_LIBS_PATH}/uibase.lib)
+            IMPORTED_IMPLIB ${MO2_INSTALL_LIBS_PATH}/uibase.lib
+            IMPORTED_LOCATION ${MO2_INSTALL_PATH}/bin/uibase.dll)
         mo2_add_dependencies(mo2-uibase
             INTERFACE Qt::Widgets Qt::Network Qt::QuickWidgets)
         target_include_directories(mo2-uibase

@@ -29,6 +29,15 @@ function(mo2_find_python_executable VARNAME)
 	endif()
 endfunction()
 
+#! mo2_find_windeployqt_executable : find the full path to the windeployqt executable
+#
+# \param:VARNAME name of the variable that will contain the path to Python
+function(mo2_find_windeployqt_executable VARNAME)
+	# find_program() does not work for whatever reason, just going for the whole
+	# name
+	set(${VARNAME} ${QT_ROOT}/bin/windeployqt.exe PARENT_SCOPE)
+endfunction()
+
 #! mo2_set_project_to_run_from_install : set a target to run from a given executable
 #
 # this function is only meaningful for VS generator
@@ -113,6 +122,34 @@ function(mo2_find_qt_version VAR)
 	set(${VAR} ${${VAR}} CACHE STRING "Qt Version}")
 endfunction()
 
+#! mo2_deploy_qt_for_tests : add comments to deploy Qt for tests
+#
+# unlike mo2_deploy_qt(), this function does not perform any cleaning
+#
+# \param:TARGET name of the target to deploy for
+# \param:BINARIES names of the binaries to deploy from
+#
+function(mo2_deploy_qt_for_tests)
+	cmake_parse_arguments(DEPLOY "" "TARGET" "BINARIES" ${ARGN})
+
+	mo2_find_windeployqt_executable(windeployqt)
+
+	add_custom_command(TARGET "${DEPLOY_TARGET}"
+		POST_BUILD
+		COMMAND ${windeployqt}
+		ARGS
+			--dir $<TARGET_FILE_DIR:${DEPLOY_TARGET}>
+			--no-translations
+			--verbose 0
+			--no-compiler-runtime
+			"$<TARGET_FILE:${DEPLOY_TARGET}>"
+			"${DEPLOY_BINARIES}"
+		VERBATIM
+		COMMAND_EXPAND_LISTS
+		WORKING_DIRECTORY $<TARGET_FILE_DIR:${DEPLOY_TARGET}>
+	)
+endfunction()
+
 #! mo2_deploy_qt : add commands to deploy Qt from the given binaries
 #
 # this function attach install() entries that deploy Qt for the given binaries
@@ -123,9 +160,7 @@ endfunction()
 function(mo2_deploy_qt)
 	cmake_parse_arguments(DEPLOY "NOPLUGINS" "" "BINARIES" ${ARGN})
 
-	# find_program() does not work for whatever reason, just going for the whole
-	# name
-	set(windeployqt ${QT_ROOT}/bin/windeployqt.exe)
+	mo2_find_windeployqt_executable(windeployqt)
 
 	set(args
 		"--no-translations \
