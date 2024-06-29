@@ -44,6 +44,12 @@ function(mo2_add_dependencies TARGET PRIVATE_OR_PUBLIC)
 		list(TRANSFORM qt_deps REPLACE "Qt::" "")
 		find_package(Qt${QT_MAJOR_VERSION} COMPONENTS ${qt_deps} REQUIRED)
 
+        set(qt_include_dirs "")
+        foreach(qt_dep ${qt_deps})
+            list(APPEND qt_include_dirs ${Qt${qt_dep}_INCLUDE_DIRS})
+        endforeach()
+        target_include_directories(${TARGET} SYSTEM ${PRIVATE_OR_PUBLIC} ${qt_include_dirs})
+
 		# add QtX:: for target ink
 		list(TRANSFORM qt_deps REPLACE "^(.+)$" "Qt${QT_MAJOR_VERSION}::\\1")
 		target_link_libraries(${TARGET} ${PRIVATE_OR_PUBLIC} ${qt_deps})
@@ -53,7 +59,7 @@ function(mo2_add_dependencies TARGET PRIVATE_OR_PUBLIC)
 	if (boost_deps)
 		find_package(Boost REQUIRED)
 		target_include_directories(
-			${TARGET} ${PRIVATE_OR_PUBLIC} ${Boost_INCLUDE_DIRS})
+			${TARGET} SYSTEM ${PRIVATE_OR_PUBLIC} ${Boost_INCLUDE_DIRS})
 
 		list(TRANSFORM boost_deps REPLACE "boost(::)?" "")
 		list(FILTER boost_deps EXCLUDE REGEX "^$")
@@ -277,7 +283,7 @@ function(mo2_find_spdlog)
 
     add_library(mo2-spdlog INTERFACE)
     target_compile_definitions(mo2-spdlog INTERFACE SPDLOG_USE_STD_FORMAT)
-    target_include_directories(mo2-spdlog INTERFACE ${SPDLOG_ROOT}/include)
+    target_include_directories(mo2-spdlog SYSTEM INTERFACE ${SPDLOG_ROOT}/include)
     add_library(mo2::spdlog ALIAS mo2-spdlog)
 
 endfunction()
