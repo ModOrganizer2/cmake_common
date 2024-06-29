@@ -339,6 +339,7 @@ function(mo2_configure_executable TARGET)
 	endif()
 endfunction()
 
+
 #! mo2_install_target : set install for a MO2 target
 #
 # for this to work properly, the target must have been configured
@@ -351,7 +352,6 @@ endfunction()
 function(mo2_install_target TARGET)
 	cmake_parse_arguments(MO2 "FOLDER" "INSTALLDIR" "" ${ARGN})
 
-
 	get_target_property(MO2_TARGET_TYPE ${TARGET} MO2_TARGET_TYPE)
 
 	# core install: .lib, .dll or .exe, to the right folder
@@ -363,7 +363,7 @@ function(mo2_install_target TARGET)
 		if (${MO2_FOLDER})
 			install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins/$<TARGET_FILE_BASE_NAME:${TARGET}>)
 		else()
-			install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins)
+			install(TARGETS ${TARGET} RUNTIME DESTINATION bin/extensions/${MO2_EXTENSION_ID}/plugins)
 		endif()
 		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-static")
