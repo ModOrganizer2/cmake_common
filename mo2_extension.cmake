@@ -17,9 +17,15 @@ function(mo2_configure_extension)
 
     file(READ ${METADATA_FILE} JSON_METADATA)
     string(JSON extension_identifier GET ${JSON_METADATA} id)
+    string(JSON extension_icon ERROR_VARIABLE extension_icon_error GET ${JSON_METADATA} icon)
 
     set(MO2_EXTENSION_ID ${extension_identifier} PARENT_SCOPE)
-
     install(FILES ${METADATA_FILE}
         DESTINATION ${MO2_INSTALL_BIN}/extensions/${extension_identifier}/)
+
+    if (NOT (${extension_icon} EQUAL "icon-NOTFOUND"))
+        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${extension_icon}
+            DESTINATION ${MO2_INSTALL_BIN}/extensions/${extension_identifier}/)
+    endif()
+
 endfunction()
