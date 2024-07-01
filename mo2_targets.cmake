@@ -288,6 +288,28 @@ function(mo2_find_spdlog)
 
 endfunction()
 
+#! mo2_find_directxtex : find and create a mo2::directxtex target
+#
+function(mo2_find_directxtex)
+    if (TARGET mo2-directxtex)
+        return()
+    endif()
+
+    mo2_required_variable(NAME DIRECTXTEX_ROOT TYPE PATH)
+
+    add_library(mo2-directxtex IMPORTED STATIC)
+    set_target_properties(mo2-directxtex PROPERTIES
+        IMPORTED_LOCATION_DEBUG ${DIRECTXTEX_ROOT}/Lib/Debug/DirectXTex.lib
+        IMPORTED_LOCATION_MINSIZEREL ${DIRECTXTEX_ROOT}/Lib/Release/DirectXTex.lib
+        IMPORTED_LOCATION_RELEASE ${DIRECTXTEX_ROOT}/Lib/Release/DirectXTex.lib
+        IMPORTED_LOCATION_RELWITHDEBINFO ${DIRECTXTEX_ROOT}/Lib/Release/DirectXTex.lib
+    )
+    target_include_directories(mo2-directxtex INTERFACE ${DIRECTXTEX_ROOT}/Include)
+
+    add_library(mo2::DirectXTex ALIAS mo2-directxtex)
+
+endfunction()
+
 #! mo2_find_libbsarch : find and create a mo2::libbsarch target
 #
 function(mo2_find_libbsarch)
@@ -295,15 +317,17 @@ function(mo2_find_libbsarch)
         return()
     endif()
 
+    mo2_find_directxtex()
+
     mo2_required_variable(NAME LIBBSARCH_ROOT TYPE PATH)
 
-    add_library(mo2-libbsarch IMPORTED STATIC)
+    add_library(mo2-libbsarch IMPORTED SHARED)
     set_target_properties(mo2-libbsarch PROPERTIES
-        IMPORTED_LOCATION
-        ${LIBBSARCH_ROOT}/libbsarch.lib
+        IMPORTED_IMPLIB ${LIBBSARCH_ROOT}/libbsarch.lib
+        IMPORTED_LOCATION ${LIBBSARCH_ROOT}/libbsarch.dll
     )
     target_include_directories(mo2-libbsarch INTERFACE ${LIBBSARCH_ROOT})
-    target_link_libraries(mo2-libbsarch INTERFACE ${LIBBSARCH_ROOT}/libbsarch_OOP.lib)
+    target_link_libraries(mo2-libbsarch INTERFACE ${LIBBSARCH_ROOT}/libbsarch_OOP.lib mo2::DirectXTex)
     add_library(mo2::libbsarch ALIAS mo2-libbsarch)
 
 endfunction()
