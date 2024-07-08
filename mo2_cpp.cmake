@@ -251,26 +251,6 @@ function(mo2_configure_tests TARGET)
 	)
 endfunction()
 
-#! mo2_configure_uibase : configure the uibase target for MO2
-#
-# this function does mostly nothing except calling mo2_configure_target, but is useful
-# to be consistent with other mo2_configure_XXX
-#
-function(mo2_configure_uibase TARGET)
-	if (NOT (${TARGET} STREQUAL "uibase"))
-		message(WARNING "mo2_configure_uibase() should only be used on the uibase target")
-	endif()
-
-	mo2_configure_target(${TARGET} ${ARGN})
-	set_target_properties(${TARGET} PROPERTIES MO2_TARGET_TYPE "uibase")
-
-	target_include_directories(${TARGET} PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/game_features)
-
-	mo2_set_project_to_run_from_install(
-		${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
-endfunction()
-
 #! mo2_configure_plugin : configure a target as a MO2 C++ plugin
 #
 # this function automatically set uibase as a dependency
@@ -355,23 +335,19 @@ function(mo2_install_target TARGET)
 	get_target_property(MO2_TARGET_TYPE ${TARGET} MO2_TARGET_TYPE)
 
 	# core install: .lib, .dll or .exe, to the right folder
-	if (${MO2_TARGET_TYPE} STREQUAL "uibase")
-		mo2_set_if_not_defined(MO2_INSTALLDIR "bin")
-		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
-		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
-	elseif (${MO2_TARGET_TYPE} STREQUAL "plugin")
+	if (${MO2_TARGET_TYPE} STREQUAL "plugin")
 		if (${MO2_FOLDER})
 			install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins/$<TARGET_FILE_BASE_NAME:${TARGET}>)
 		else()
 			install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins)
 		endif()
-		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION lib)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-static")
-		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION lib)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "library-shared")
 		mo2_set_if_not_defined(MO2_INSTALLDIR "bin/dlls")
 		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
-		install(TARGETS ${TARGET} ARCHIVE DESTINATION libs)
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION lib)
 	elseif (${MO2_TARGET_TYPE} STREQUAL "executable")
 		mo2_set_if_not_defined(MO2_INSTALLDIR "bin")
 		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALLDIR})
