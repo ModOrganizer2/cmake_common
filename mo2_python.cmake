@@ -32,12 +32,10 @@ function(mo2_python_uifiles TARGET)
 		set(output "${folder}/${name}.py")
 		add_custom_command(
 			OUTPUT "${output}"
-			COMMAND ${PYTHON_EXE}
-				-I
-				-m PyQt${QT_MAJOR_VERSION}.uic.pyuic
+			COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_BINARY_DIR}/pylibs
+				${CMAKE_BINARY_DIR}/pylibs/bin/pyuic${Qt_VERSION_MAJOR}.exe
 				-o "${output}"
 				"${UI_FILE}"
-			WORKING_DIRECTORY ${PYTHON_ROOT}
 			DEPENDS "${UI_FILE}"
 		)
 
@@ -53,61 +51,7 @@ function(mo2_python_uifiles TARGET)
 	set_target_properties("${TARGET}_uic" PROPERTIES FOLDER autogen)
 
 	add_dependencies(${TARGET} "${TARGET}_uic")
-
-endfunction()
-
-#! mo2_python_rcfiles : create .py files from .qrc files for a python target
-#
-# \param:TARGET target to generate .py files for
-# \param:INPLACE if specified, .py files are generated next to the .qrc files, useful
-#     for Python modules, otherwise files are generated in the binary directory
-# \param:FILES list of .qrc files to generate .py files from
-#
-function(mo2_python_rcfiles TARGET)
-	cmake_parse_arguments(MO2 "" "INPLACE" "FILES" ${ARGN})
-
-	if (NOT MO2_FILES)
-		return()
-	endif()
-
-	mo2_find_python_executable(PYTHON_EXE)
-
-	message(DEBUG "generating .py from qrc files: ${MO2_FILES}")
-
-	set(pyrc_files "")
-	foreach (RC_FILE ${MO2_FILES})
-		get_filename_component(name "${RC_FILE}" NAME_WLE)
-		get_filename_component(folder "${RC_FILE}" DIRECTORY)
-		if (${MO2_INPLACE})
-			get_filename_component(folder "${RC_FILE}" DIRECTORY)
-		else()
-			set(folder "${CMAKE_CURRENT_BINARY_DIR}")
-		endif()
-
-
-		set(output "${folder}/${name}_rc.py")
-		add_custom_command(
-			OUTPUT "${output}"
-			COMMAND ${PYTHON_EXE}
-				-I
-				-m PyQt5.pyrcc_main
-				-o "${output}"
-				"${RC_FILE}"
-			WORKING_DIRECTORY ${PYTHON_ROOT}
-			DEPENDS "${RC_FILE}"
-		)
-
-		list(APPEND pyrc_files "${output}")
-	endforeach()
-
-	if (${MO2_INPLACE})
-		source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
-			PREFIX autogen FILES ${pyrc_files})
-	endif()
-
-	add_custom_target("${TARGET}_qrc" DEPENDS ${pyrc_files})
-	set_target_properties("${TARGET}_qrc" PROPERTIES FOLDER autogen)
-	add_dependencies(${TARGET} "${TARGET}_qrc")
+	add_dependencies("${TARGET}_uic" PyQt6)
 
 endfunction()
 
@@ -139,7 +83,6 @@ function(mo2_python_pip_install TARGET)
 				--target="${MO2_DIRECTORY}"
 				--log="${pip_log_file}"
 				${MO2_PACKAGES}
-		WORKING_DIRECTORY ${PYTHON_ROOT}
 	)
 
 	set(pip_target_name "${TARGET}_pip_${PIP_FILE_LOG}")
@@ -169,7 +112,6 @@ function(mo2_python_requirements TARGET)
 				--target="${MO2_LIBDIR}"
 				--log="${CMAKE_CURRENT_BINARY_DIR}/pip.log"
 				-r "${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
-		WORKING_DIRECTORY ${PYTHON_ROOT}
 		DEPENDS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
 	)
 	add_custom_target("${TARGET}_libs"
@@ -182,7 +124,7 @@ function(mo2_python_requirements TARGET)
 
 	install(
 		DIRECTORY "${MO2_LIBDIR}"
-		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}/"
+		DESTINATION "bin/plugins/${TARGET}/"
 		PATTERN "__pycache__" EXCLUDE
 	)
 
@@ -227,10 +169,6 @@ function(mo2_configure_python_module TARGET)
 	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	mo2_python_uifiles(${TARGET} INPLACE FILES ${ui_files})
 
-	# qrc file
-	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
-	mo2_python_rcfiles(${TARGET} INPLACE FILES ${qrc_files})
-
     # install requirements if there are any
 	if(EXISTS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
 		mo2_python_requirements(${TARGET} LIBDIR "${lib_dir}")
@@ -241,7 +179,7 @@ function(mo2_configure_python_module TARGET)
 			FILES "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
 	endif()
 
-    set(install_dir "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}")
+    set(install_dir "bin/plugins/${TARGET}")
 
 	# directories that go in bin/plugins/${name}
 	install(
@@ -281,10 +219,6 @@ function(mo2_configure_python_simple TARGET)
 	file(GLOB ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	mo2_python_uifiles(${TARGET} FILES ${ui_files})
 
-	# qrc file
-	file(GLOB qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
-	mo2_python_rcfiles(${TARGET} FILES ${qrc_files})
-
 	# .py files directly in the directory
 	file(GLOB py_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
 
@@ -305,7 +239,7 @@ function(mo2_configure_python_simple TARGET)
 		PREFIX data
 		FILES ${json_files})
 
-    set(install_dir "${MO2_INSTALL_PATH}/bin/plugins")
+    set(install_dir "bin/plugins")
 
 	# .py files directly in src/ go to plugins/
 	install(FILES ${py_files} DESTINATION ${install_dir})
