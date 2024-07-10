@@ -47,11 +47,17 @@ configuration files.
 
 Be aware that using these utilities will automatically some (not too intrusive) global
 variable on your project.
-You will need to have `Qt` in your CMake module path otherwise the import will fail
-due to a broken `find_package(Qt6)`.
 
 For some functions to work properly, you should set `CMAKE_INSTALL_PREFIX` to a
 directory where `${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe` can be found.
+
+Importing the utilities will make the following variables available:
+
+- `MO2_QT_VERSION` - The Qt version used by MO2, as `major.minor.patch`.
+- `MO2_QT_MAJOR_VERSION`, `MO2_QT_MINOR_VERSION` and `MO2_QT_PATCH_VERSION` -
+  Respectively the major, minor and patch version of Qt used by MO2.
+- `MO2_PYTHON_VERSION` - The Python version used by MO2 as `major.minor` (patch version
+  should not be relevant).
 
 All functions are prefixed by `mo2_` and should not conflict with other existing
 functions.
