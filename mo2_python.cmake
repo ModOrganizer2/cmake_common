@@ -63,11 +63,29 @@ endfunction()
 #   "PyQt6==6.3.0"
 #
 function(mo2_python_pip_install TARGET)
-	cmake_parse_arguments(MO2 "" "DIRECTORY" "PACKAGES" ${ARGN})
+	cmake_parse_arguments(MO2 "NO_DEPENDENCIES;PRE_RELEASE" "DIRECTORY" "PACKAGES;EXTRA_INDEX_URLS" ${ARGN})
 
 	if (NOT MO2_DIRECTORY)
 		message(FATAL_ERROR "must specified a DIRECTORY for pip install")
 	endif()
+
+	mo2_set_if_not_defined(MO2_NO_DEPENDENCIES OFF)
+	mo2_set_if_not_defined(MO2_PRE_RELEASE OFF)
+	mo2_set_if_not_defined(MO2_EXTRA_INDEX_URLS "")
+
+	set(pip_extra_arguments "")
+
+	if (MO2_NO_DEPENDENCIES)
+		list(APPEND pip_extra_arguments --no-deps)
+	endif()
+
+	if (MO2_PRE_RELEASE)
+		list(APPEND pip_extra_arguments --pre)
+	endif()
+
+	foreach(_extra_index_url ${MO2_EXTRA_INDEX_URLS})
+		list(APPEND pip_extra_arguments --extra-index-url ${_extra_index_url})
+	endforeach()
 
 	mo2_find_python_executable(PYTHON_EXE)
 
@@ -79,7 +97,13 @@ function(mo2_python_pip_install TARGET)
 		COMMAND ${PYTHON_EXE}
 				-I
 				-m pip
-				install --force --upgrade --disable-pip-version-check
+				install
+				${pip_extra_arguments}
+				--force
+				--upgrade
+				--disable-pip-version-check
+				--isolated
+				--no-cache-dir
 				--target="${MO2_DIRECTORY}"
 				--log="${pip_log_file}"
 				${MO2_PACKAGES}
