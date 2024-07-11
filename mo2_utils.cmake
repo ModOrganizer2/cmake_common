@@ -312,21 +312,26 @@ function(mo2_add_lupdate TARGET)
 
 	message(TRACE "TS_FILE: ${MO2_TS_FILE}, SOURCES: ${MO2_SOURCES}, FILES: ${translation_files}")
 
+	add_custom_target("${TARGET}_lupdate" DEPENDS ${MO2_TS_FILE})
+
 	if (${is_cpp})
-		mo2_find_qt_executable(lupdate_command lupdate)
-		set(lupdate_args ${MO2_SOURCES} -ts ${MO2_TS_FILE})
+		mo2_find_qt_executable(lupdate lupdate)
+		set(lupdate_command ${lupdate} ${MO2_SOURCES} -ts ${MO2_TS_FILE})
 	else()
-		mo2_find_python_executable(PYTHON_EXE)
-		set(lupdate_command ${PYTHON_EXE})
-		set(lupdate_args -I -m PyQt${Qt_VERSION_MAJOR}.lupdate.pylupdate --ts "${MO2_TS_FILE}" ${translation_files})
+		mo2_python_install_pyqt()
+		set(lupdate_command
+			${CMAKE_COMMAND}
+			-E env PYTHONPATH=${CMAKE_BINARY_DIR}/pylibs
+			${CMAKE_BINARY_DIR}/pylibs/bin/pylupdate${MO2_QT_VERSION_MAJOR}.exe
+			--ts "${MO2_TS_FILE}" ${translation_files})
+
+		add_dependencies("${TARGET}_lupdate" PyQt6)
 	endif()
 
 	add_custom_command(OUTPUT ${MO2_TS_FILE}
-		COMMAND ${lupdate_command} ARGS ${lupdate_args}
+		COMMAND ${lupdate_command}
 		DEPENDS ${translation_files}
 		VERBATIM)
-
-	add_custom_target("${TARGET}_lupdate" DEPENDS ${MO2_TS_FILE})
 
 	# we need to set this property otherwise there is an issue with C# projects
 	# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
