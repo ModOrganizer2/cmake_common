@@ -2,59 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
-#! mo2_python_uifiles : create .py files from .ui files for a python target
-#
-# \param:TARGET target to generate .py files for
-# \param:INPLACE if specified, .py files are generated next to the .ui files, useful
-#     for Python modules, otherwise files are generated in the binary directory
-# \param:FILES list of .ui files to generate .py files from
-#
-function(mo2_python_uifiles TARGET)
-	cmake_parse_arguments(MO2 "INPLACE" "" "FILES" ${ARGN})
-
-	if (NOT MO2_FILES)
-		return()
-	endif()
-
-	mo2_find_python_executable(PYTHON_EXE)
-
-	message(DEBUG "generating .py from ui files: ${MO2_FILES}")
-
-	set(pyui_files "")
-	foreach (UI_FILE ${MO2_FILES})
-		get_filename_component(name "${UI_FILE}" NAME_WLE)
-		if (${MO2_INPLACE})
-			get_filename_component(folder "${UI_FILE}" DIRECTORY)
-		else()
-			set(folder "${CMAKE_CURRENT_BINARY_DIR}")
-		endif()
-
-		set(output "${folder}/${name}.py")
-		add_custom_command(
-			OUTPUT "${output}"
-			COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_BINARY_DIR}/pylibs
-				${CMAKE_BINARY_DIR}/pylibs/bin/pyuic${Qt_VERSION_MAJOR}.exe
-				-o "${output}"
-				"${UI_FILE}"
-			DEPENDS "${UI_FILE}"
-		)
-
-		list(APPEND pyui_files "${output}")
-	endforeach()
-
-	if (${MO2_INPLACE})
-		source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
-			PREFIX autogen FILES ${pyui_files})
-	endif()
-
-	add_custom_target("${TARGET}_uic" DEPENDS ${pyui_files})
-	set_target_properties("${TARGET}_uic" PROPERTIES FOLDER autogen)
-
-	add_dependencies(${TARGET} "${TARGET}_uic")
-	add_dependencies("${TARGET}_uic" PyQt6)
-
-endfunction()
-
 #! mo2_python_pip_install : run "pip install ..."
 #
 # \param:TARGET target to install Python package for
@@ -115,6 +62,78 @@ function(mo2_python_pip_install TARGET)
 	set_target_properties(${pip_target_name} PROPERTIES FOLDER autogen)
 
 	add_dependencies(${TARGET} ${pip_target_name})
+
+endfunction()
+
+#! mo2_python_install_pyqt : install PyQt6 and create a PyQt6 target for it
+#
+# it is safe to call this function multiple times, PyQt6 will only be installed once
+#
+function(mo2_python_install_pyqt)
+	if (TARGET PyQt6)
+		return()
+	endif()
+
+	add_custom_target(PyQt6)
+	mo2_python_pip_install(PyQt6
+		DIRECTORY ${CMAKE_BINARY_DIR}/pylibs/
+		PACKAGES
+			PyQt${MO2_QT_VERSION_MAJOR}==${MO2_QT_VERSION}
+			sip==6.8.5)
+endfunction()
+
+#! mo2_python_uifiles : create .py files from .ui files for a python target
+#
+# \param:TARGET target to generate .py files for
+# \param:INPLACE if specified, .py files are generated next to the .ui files, useful
+#     for Python modules, otherwise files are generated in the binary directory
+# \param:FILES list of .ui files to generate .py files from
+#
+function(mo2_python_uifiles TARGET)
+	cmake_parse_arguments(MO2 "INPLACE" "" "FILES" ${ARGN})
+
+	if (NOT MO2_FILES)
+		return()
+	endif()
+
+	mo2_find_python_executable(PYTHON_EXE)
+	mo2_python_install_pyqt()
+
+	message(DEBUG "generating .py from ui files: ${MO2_FILES}")
+
+	set(pyui_files "")
+	foreach (UI_FILE ${MO2_FILES})
+		get_filename_component(name "${UI_FILE}" NAME_WLE)
+		if (${MO2_INPLACE})
+			get_filename_component(folder "${UI_FILE}" DIRECTORY)
+		else()
+			set(folder "${CMAKE_CURRENT_BINARY_DIR}")
+		endif()
+
+		set(output "${folder}/${name}.py")
+		add_custom_command(
+			OUTPUT "${output}"
+			COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_BINARY_DIR}/pylibs
+				${CMAKE_BINARY_DIR}/pylibs/bin/pyuic${Qt_VERSION_MAJOR}.exe
+				-o "${output}"
+				"${UI_FILE}"
+			DEPENDS "${UI_FILE}"
+		)
+
+		list(APPEND pyui_files "${output}")
+	endforeach()
+
+	if (${MO2_INPLACE})
+		source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
+			PREFIX autogen FILES ${pyui_files})
+	endif()
+
+	add_custom_target("${TARGET}_uic" DEPENDS ${pyui_files})
+	set_target_properties("${TARGET}_uic" PROPERTIES FOLDER autogen)
+
+	add_dependencies(${TARGET} "${TARGET}_uic")
+
+	add_dependencies("${TARGET}_uic" PyQt6)
 
 endfunction()
 
