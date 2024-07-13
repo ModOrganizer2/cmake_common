@@ -83,6 +83,7 @@ function(mo2_python_install_pyqt)
 	endif()
 
 	add_custom_target(PyQt6)
+	set_target_properties(PyQt6 PROPERTIES FOLDER autogen)
 	mo2_python_pip_install(PyQt6 NO_FORCE
 		PACKAGES
 			PyQt${MO2_QT_VERSION_MAJOR}==${MO2_QT_VERSION}
