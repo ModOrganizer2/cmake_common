@@ -86,7 +86,6 @@ function(mo2_default_source_group)
 	source_group(resources REGULAR_EXPRESSION ".*\\.qrc|.*\\.rc")
 
 	if (NOT NO_SRC)
-		message(STATUS "XXX: SETTING SRC")
 		source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)$")
 	endif()
 endfunction()
