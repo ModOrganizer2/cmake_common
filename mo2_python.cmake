@@ -16,7 +16,7 @@ function(mo2_python_pip_install TARGET)
 	cmake_parse_arguments(MO2
 		"NO_DEPENDENCIES;PRE_RELEASE;NO_FORCE;USE_CACHE" "DIRECTORY" "PACKAGES;EXTRA_INDEX_URLS" ${ARGN})
 
-	mo2_set_if_not_defined(DIRECTORY ${MO2_PYLIBS_DIR})
+	mo2_set_if_not_defined(MO2_DIRECTORY ${MO2_PYLIBS_DIR})
 	mo2_set_if_not_defined(MO2_NO_DEPENDENCIES OFF)
 	mo2_set_if_not_defined(MO2_PRE_RELEASE OFF)
 	mo2_set_if_not_defined(MO2_NO_FORCE OFF)
