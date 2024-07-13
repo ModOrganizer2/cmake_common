@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
+set(MO2_PYLIBS_DIR "${CMAKE_BINARY_DIR}/pylibs" CACHE PATH
+    "default for path for Python libraries")
+
 #! mo2_python_pip_install : run "pip install ..."
 #
 # \param:TARGET target to install Python package for
@@ -10,28 +13,36 @@ include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 #   "PyQt6==6.3.0"
 #
 function(mo2_python_pip_install TARGET)
-	cmake_parse_arguments(MO2 "NO_DEPENDENCIES;PRE_RELEASE" "DIRECTORY" "PACKAGES;EXTRA_INDEX_URLS" ${ARGN})
+	cmake_parse_arguments(MO2
+		"NO_DEPENDENCIES;PRE_RELEASE;NO_FORCE;USE_CACHE" "DIRECTORY" "PACKAGES;EXTRA_INDEX_URLS" ${ARGN})
 
-	if (NOT MO2_DIRECTORY)
-		message(FATAL_ERROR "must specified a DIRECTORY for pip install")
-	endif()
-
+	mo2_set_if_not_defined(DIRECTORY ${MO2_PYLIBS_DIR})
 	mo2_set_if_not_defined(MO2_NO_DEPENDENCIES OFF)
 	mo2_set_if_not_defined(MO2_PRE_RELEASE OFF)
+	mo2_set_if_not_defined(MO2_NO_FORCE OFF)
+	mo2_set_if_not_defined(MO2_USE_CACHE OFF)
 	mo2_set_if_not_defined(MO2_EXTRA_INDEX_URLS "")
 
-	set(pip_extra_arguments "")
+	set(pip_install_arguments "")
 
 	if (MO2_NO_DEPENDENCIES)
-		list(APPEND pip_extra_arguments --no-deps)
+		list(APPEND pip_install_arguments --no-deps)
 	endif()
 
 	if (MO2_PRE_RELEASE)
-		list(APPEND pip_extra_arguments --pre)
+		list(APPEND pip_install_arguments --pre)
+	endif()
+
+	if (NOT MO2_NO_FORCE)
+		list(APPEND pip_install_arguments --force)
+	endif()
+
+	if (NOT USE_CACHE)
+		list(APPEND pip_install_arguments --no-cache-dir)
 	endif()
 
 	foreach(_extra_index_url ${MO2_EXTRA_INDEX_URLS})
-		list(APPEND pip_extra_arguments --extra-index-url ${_extra_index_url})
+		list(APPEND pip_install_arguments --extra-index-url ${_extra_index_url})
 	endforeach()
 
 	mo2_find_python_executable(PYTHON_EXE)
@@ -45,9 +56,7 @@ function(mo2_python_pip_install TARGET)
 				-I
 				-m pip
 				install
-				${pip_extra_arguments}
-				--force
-				--upgrade
+				${pip_install_arguments}
 				--disable-pip-version-check
 				--isolated
 				--no-cache-dir
@@ -62,7 +71,6 @@ function(mo2_python_pip_install TARGET)
 	set_target_properties(${pip_target_name} PROPERTIES FOLDER autogen)
 
 	add_dependencies(${TARGET} ${pip_target_name})
-
 endfunction()
 
 #! mo2_python_install_pyqt : install PyQt6 and create a PyQt6 target for it
@@ -75,11 +83,10 @@ function(mo2_python_install_pyqt)
 	endif()
 
 	add_custom_target(PyQt6)
-	mo2_python_pip_install(PyQt6
-		DIRECTORY ${CMAKE_BINARY_DIR}/pylibs/
+	mo2_python_pip_install(PyQt6 NO_FORCE
 		PACKAGES
 			PyQt${MO2_QT_VERSION_MAJOR}==${MO2_QT_VERSION}
-			sip==6.8.5)
+			sip==${MO2_SIP_VERSION})
 endfunction()
 
 #! mo2_python_uifiles : create .py files from .ui files for a python target
@@ -114,7 +121,7 @@ function(mo2_python_uifiles TARGET)
 		add_custom_command(
 			OUTPUT "${output}"
 			COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_BINARY_DIR}/pylibs
-				${CMAKE_BINARY_DIR}/pylibs/bin/pyuic${MO2_QT_VERSION_MAJOR}.exe
+				${MO2_PYLIBS_DIR}/bin/pyuic${MO2_QT_VERSION_MAJOR}.exe
 				-o "${output}"
 				"${UI_FILE}"
 			DEPENDS "${UI_FILE}"
