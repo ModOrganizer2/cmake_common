@@ -304,7 +304,7 @@ endfunction()
 function(mo2_configure_plugin TARGET)
 	mo2_configure_target(${TARGET} ${ARGN})
 	mo2_set_project_to_run_from_install(
-		${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
+		${TARGET} EXECUTABLE ${CMAKE_INSTALL_PREFIX}/${MO2_INSTALL_BIN}/ModOrganizer.exe)
 endfunction()
 
 #! mo2_install_plugin : install the given MO2 plugin
@@ -317,13 +317,15 @@ function(mo2_install_plugin TARGET)
 	cmake_parse_arguments(MO2 "FOLDER" "" "" ${ARGN})
 
 	if (${MO2_FOLDER})
-		install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins/$<TARGET_FILE_BASE_NAME:${TARGET}>)
+		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/plugins/$<TARGET_FILE_BASE_NAME:${TARGET}>)
 	else()
-		install(TARGETS ${TARGET} RUNTIME DESTINATION bin/plugins)
+		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/plugins)
 	endif()
-	install(TARGETS ${TARGET} ARCHIVE DESTINATION lib)
 
-	# install PDB if possible
-	install(FILES $<TARGET_PDB_FILE:${TARGET}> DESTINATION pdb OPTIONAL)
+	if (NOT MO2_INSTALL_IS_BIN)
+		install(TARGETS ${TARGET} ARCHIVE DESTINATION lib)
+		# install PDB if possible
+		install(FILES $<TARGET_PDB_FILE:${TARGET}> DESTINATION pdb OPTIONAL)
+	endif()
 
 endfunction()

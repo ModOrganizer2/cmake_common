@@ -181,12 +181,14 @@ endfunction()
 # this function attach install() entries that deploy Qt for the given binaries
 #
 # \param:NOPLUGINS do not deploy Qt plugins
+# \param:DIRECTORY directory, relative to CMAKE_INSTALL_PREFIX, to deploy to, default
+#   to ${MO2_INSTALL_BIN}
 # \param:BINARIES names of the binaries (in the install path) to deploy from
 #
 function(mo2_deploy_qt)
 	cmake_parse_arguments(DEPLOY "NOPLUGINS" "DIRECTORY" "BINARIES" ${ARGN})
 
-	mo2_set_if_not_defined(DEPLOY_DIRECTORY "bin")
+	mo2_set_if_not_defined(DEPLOY_DIRECTORY "${MO2_INSTALL_BIN}")
 
 	mo2_find_qt_executable(windeployqt windeployqt)
 
@@ -353,14 +355,14 @@ endfunction()
 # \param:TARGET target to generate releases for
 # \param:INSTALL if set, QM files will be installed
 # \param:DIRECTORY if INSTALL is set, path where translations should be installed,
-#   default to bin/translations
+#   default to ${MO2_INSTALL_BIN}/translations
 # \param:QM_FILE .qm file to generate
 # \param:TS_FILES source ts
 #
 function(mo2_add_lrelease TARGET)
 	cmake_parse_arguments(MO2 "INSTALL" "DIRECTORY;QM_FILE" "TS_FILES" ${ARGN})
 
-	mo2_set_if_not_defined(MO2_DIRECTORY "bin/translations")
+	mo2_set_if_not_defined(MO2_DIRECTORY "${MO2_INSTALL_BIN}/translations")
 
 	mo2_find_qt_executable(lrelease_command lrelease)
 
@@ -395,7 +397,7 @@ endfunction()
 # \param:TARGET target to generate translations for
 # \param:RELEASE if set, will use mo2_add_lrelease to generate .qm files
 # \param:INSTALL_RELEASE if true, will install generated .qm files (force RELEASE)
-# \param:INSTALL_DIRECTORY installation directory for .qm files, default to bin/translations
+# \param:INSTALL_DIRECTORY installation directory for .qm files, default to ${MO2_INSTALL_BIN}/translations
 # \param:TS_FILE intermediate .ts file to generate
 # \param:QM_FILE file .qm file to generate if RELEASE or INSTALL_RELEASE is set
 # \param:SOURCES source directories to look for translations, send to mo2_add_lupdate
@@ -405,7 +407,7 @@ function(mo2_add_translations TARGET)
 
 	mo2_set_if_not_defined(MO2_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}_en.ts)
 	mo2_set_if_not_defined(MO2_QM_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_en.qm)
-	mo2_set_if_not_defined(MO2_INSTALL_DIRECTORY "bin/translations")
+	mo2_set_if_not_defined(MO2_INSTALL_DIRECTORY "${MO2_INSTALL_BIN}/translations")
 
 	# force release with install
 	if (${MO2_INSTALL_RELEASE})

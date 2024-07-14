@@ -4,6 +4,15 @@ if (DEFINED MO2_DEFINED)
 	return()
 endif()
 
+option(MO2_INSTALL_IS_BIN
+	"if set, CMAKE_INSTALL_PREFIX is assumed to point to bin rather than one level below")
+
+if (MO2_INSTALL_IS_BIN)
+	set(MO2_INSTALL_BIN ".")
+else()
+	set(MO2_INSTALL_BIN "bin")
+endif()
+
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_versions.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
