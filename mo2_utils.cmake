@@ -184,7 +184,9 @@ endfunction()
 # \param:BINARIES names of the binaries (in the install path) to deploy from
 #
 function(mo2_deploy_qt)
-	cmake_parse_arguments(DEPLOY "NOPLUGINS" "" "BINARIES" ${ARGN})
+	cmake_parse_arguments(DEPLOY "NOPLUGINS" "DIRECTORY" "BINARIES" ${ARGN})
+
+	mo2_set_if_not_defined(DEPLOY_DIRECTORY "bin")
 
 	mo2_find_qt_executable(windeployqt windeployqt)
 
@@ -203,7 +205,7 @@ function(mo2_deploy_qt)
 		set(args "${args} --plugindir qtplugins")
 	endif()
 
-	set(bin "${CMAKE_INSTALL_PREFIX}/bin")
+	set(bin "${CMAKE_INSTALL_PREFIX}/${DEPLOY_DIRECTORY}")
 
 	set(deploys "")
 	foreach(binary ${DEPLOY_BINARIES})
