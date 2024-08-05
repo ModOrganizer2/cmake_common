@@ -45,11 +45,18 @@ configuration files.
 
 ## Usage
 
-Be aware that using these utilities will automatically some (not too intrusive) global
-variable on your project.
+Be aware that using these utilities will automatically set some (not too intrusive)
+global variable on your project.
 
-For some functions to work properly, you should set `CMAKE_INSTALL_PREFIX` to a
-directory where `${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe` can be found.
+In order to properly use this package, you should set `CMAKE_INSTALL_PREFIX` to a valid
+location.
+There are two possible way of using this package controlled by the `MO2_INSTALL_IS_BIN`
+option:
+
+- if `MO2_INSTALL_IS_BIN` is `OFF` (default), this assumes a layout with a `bin`,
+  `lib`, `include` and `pdb` folder under `CMAKE_INSTALL_PREFIX`,
+- if `MO2_INSTALL_IS_BIN` is `ON` (default when building standalone), this assumes
+  that `CMAKE_INSTALL_PREFIX` point directly to the equivalent `bin` folder.
 
 Importing the utilities will make the following variables available:
 
