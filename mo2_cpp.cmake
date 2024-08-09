@@ -264,10 +264,18 @@ endfunction()
 # OFF by default
 #
 function(mo2_configure_tests TARGET)
+	cmake_parse_arguments(MO2 "NO_MOCK;NO_MAIN" "" "" ${ARGN})
 	mo2_configure_target(${TARGET} TRANSLATIONS OFF AUTOMOC OFF ${ARGN})
 
 	find_package(GTest REQUIRED)
-	target_link_libraries(${TARGET} PRIVATE GTest::gtest GTest::gmock GTest::gtest_main)
+	target_link_libraries(${TARGET} PRIVATE GTest::gtest)
+
+	if (NOT MO2_NO_MOCK)
+		target_link_libraries(${TARGET} GTest::gmock)
+	endif()
+	if (NOT MO2_NO_MAIN)
+		target_link_libraries(${TARGET} GTest::gtest_main)
+	endif()
 
 	# gtest_discover_tests would be nice but it requires Qt DLL, uibase, etc., in the
 	# path, etc., and is not working right now
@@ -281,7 +289,10 @@ function(mo2_configure_tests TARGET)
 	# )
 	#
 
-	gtest_add_tests(TARGET ${TARGET} TEST_LIST ${TARGET}_gtests)
+	gtest_add_tests(
+		TARGET ${TARGET}
+		TEST_LIST ${TARGET}_gtests
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 	set(${TARGET}_gtests ${${TARGET}_gtests} PARENT_SCOPE)
 
 	mo2_deploy_qt_for_tests(
