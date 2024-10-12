@@ -23,7 +23,7 @@ function(mo2_configure_extension)
     install(FILES ${METADATA_FILE}
         DESTINATION ${MO2_INSTALL_BIN}/extensions/${extension_identifier}/)
 
-    if (NOT (${extension_icon} EQUAL "icon-NOTFOUND"))
+    if (NOT ${extension_icon} MATCHES  "icon-NOTFOUND")
         install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${extension_icon}
             DESTINATION ${MO2_INSTALL_BIN}/extensions/${extension_identifier}/)
     endif()
