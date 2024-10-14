@@ -184,11 +184,17 @@ function(mo2_configure_msvc TARGET)
 			/OPT:ICF
 		>)
 
-    if(${MO2_CLI})
+	if(${MO2_CLI})
 		set_target_properties(${TARGET} PROPERTIES COMMON_LANGUAGE_RUNTIME "")
-    endif()
+	endif()
 
-	set_target_properties(${TARGET} PROPERTIES VS_STARTUP_PROJECT ${TARGET})
+	get_property(CURRENT_STARTUP_PROJECT
+		DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT)
+
+	if (NOT CURRENT_STARTUP_PROJECT)
+		message(STATUS "MO2: Setting startup project to " ${TARGET} ".")
+		set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET})
+	endif()
 
 endfunction()
 
