@@ -57,7 +57,7 @@ function(mo2_add_dependencies TARGET PRIVATE_OR_PUBLIC)
 
 	# handle boost dependencies
 	if (boost_deps)
-		find_package(Boost REQUIRED)
+		find_package(Boost CONFIG REQUIRED)
 		target_include_directories(
 			${TARGET} SYSTEM ${PRIVATE_OR_PUBLIC} ${Boost_INCLUDE_DIRS})
 
@@ -66,7 +66,7 @@ function(mo2_add_dependencies TARGET PRIVATE_OR_PUBLIC)
 		message(DEBUG "boost: ${boost_deps}")
 
         if (boost_deps)
-    		find_package(Boost COMPONENTS ${boost_deps} REQUIRED)
+    		find_package(Boost CONFIG REQUIRED COMPONENTS ${boost_deps})
 	    	message(DEBUG "boost: ${Boost_LIBRARIES}")
 		    target_link_libraries(${TARGET} ${PRIVATE_OR_PUBLIC} ${Boost_LIBRARIES})
         endif()
@@ -262,7 +262,7 @@ function(mo2_find_loot)
 
     mo2_required_variable(NAME LOOT_PATH TYPE PATH)
 
-    find_package(Boost COMPONENTS locale REQUIRED)
+    find_package(Boost CONFIG REQUIRED COMPONENTS locale)
 
     add_library(mo2-loot IMPORTED SHARED)
     set_target_properties(mo2-loot PROPERTIES IMPORTED_LOCATION ${LOOT_PATH}/bin/loot.dll)
