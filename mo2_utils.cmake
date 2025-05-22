@@ -228,6 +228,7 @@ function(mo2_deploy_qt)
 
 	if(NOT ${DEPLOY_NOPLUGINS})
 		install(CODE "
+			file(RENAME \"${bin}/dlls/QtWebEngineProcess.exe\" \"${bin}/QtWebEngineProcess.exe\")
 			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
 			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/styles\")
 			file(RENAME \"${bin}/qtplugins/imageformats\" \"${bin}/dlls/imageformats\")
