@@ -57,6 +57,7 @@ function(mo2_python_pip_install TARGET)
 				-m pip
 				install
 				${pip_install_arguments}
+				--upgrade
 				--disable-pip-version-check
 				--isolated
 				--no-cache-dir
@@ -86,7 +87,7 @@ function(mo2_python_install_pyqt)
 	set_target_properties(PyQt6 PROPERTIES FOLDER autogen)
 	mo2_python_pip_install(PyQt6 NO_FORCE
 		PACKAGES
-			PyQt${MO2_QT_VERSION_MAJOR}==${MO2_QT_VERSION}
+			PyQt${MO2_QT_VERSION_MAJOR}==${MO2_PYQT_VERSION}
 			sip==${MO2_SIP_VERSION})
 endfunction()
 
