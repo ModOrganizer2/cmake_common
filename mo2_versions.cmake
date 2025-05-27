@@ -4,29 +4,38 @@ if (DEFINED MO2_VERSIONS_INCLUDED)
 	return()
 endif()
 
-if (CMAKE_CXX_COMPILER_LOADED)
-	find_package(Qt6 CONFIG QUIET)
+# define MO2_QT_VERSION and related variables
+# - if MO2_QT_VERSION is already defined, simply extract the major, minor and patch
+#   components for
+# - otherwise, if the project is a C++ project, look-up Qt and use the version from
+#   the package found
+# - otherwise, or if Qt was not found in the previous step, use a default version
+#
+if (NOT DEFINED MO2_QT_VERSION)
+	if (CMAKE_CXX_COMPILER_LOADED)
+		find_package(Qt6 CONFIG QUIET)
+	endif()
+
+	if (Qt6_FOUND)
+		set(MO2_QT_VERSION "${Qt6_VERSION}")
+	else()
+		set(MO2_QT_VERSION "6.7.3")
+	endif()
 endif()
 
-if (Qt6_FOUND)
-	set(MO2_QT_VERSION_MAJOR ${Qt6_VERSION_MAJOR})
-	set(MO2_QT_VERSION_MINOR ${Qt6_VERSION_MINOR})
-	set(MO2_QT_VERSION_PATCH ${Qt6_VERSION_PATCH})
-	set(MO2_QT_VERSION "${MO2_QT_VERSION_MAJOR}.${MO2_QT_VERSION_MINOR}.${MO2_QT_VERSION_PATCH}")
-	message(STATUS "[MO2] Found Qt version: ${MO2_QT_VERSION}")
-else()
-	set(MO2_QT_VERSION_MAJOR 6)
-	set(MO2_QT_VERSION_MINOR 7)
-	set(MO2_QT_VERSION_PATCH 3)
-	set(MO2_QT_VERSION "${MO2_QT_VERSION_MAJOR}.${MO2_QT_VERSION_MINOR}.${MO2_QT_VERSION_PATCH}")
-	message(WARNING "Qt not found, assuming ${MO2_QT_VERSION}.")
-endif()
+string(REPLACE "." ";" MO2_QT_VERSION_LIST ${MO2_QT_VERSION})
+list(GET MO2_QT_VERSION_LIST 0 MO2_QT_VERSION_MAJOR)
+list(GET MO2_QT_VERSION_LIST 1 MO2_QT_VERSION_MINOR)
+list(GET MO2_QT_VERSION_LIST 2 MO2_QT_VERSION_PATCH)
+unset(MO2_QT_VERSION_LIST)
 
-set(MO2_PYTHON_VERSION "3.12")
+message(STATUS "[MO2] Qt version: ${MO2_QT_VERSION} (${MO2_QT_VERSION_MAJOR}, ${MO2_QT_VERSION_MINOR}, ${MO2_QT_VERSION_PATCH})")
+
+mo2_set_if_not_defined(MO2_PYTHON_VERSION "3.12")
 
 # TODO: there is no prebuilt for 6.7.3, so we stay on 6.7.1 for now
-set(MO2_PYQT_VERSION "6.7.1")
-set(MO2_SIP_VERSION "6.8.6")
+mo2_set_if_not_defined(MO2_PYQT_VERSION "6.7.1")
+mo2_set_if_not_defined(MO2_SIP_VERSION "6.8.6")
 
 message(STATUS "[MO2] Python version: ${MO2_PYTHON_VERSION}")
 message(STATUS "[MO2] PyQt version: ${MO2_PYQT_VERSION}")
