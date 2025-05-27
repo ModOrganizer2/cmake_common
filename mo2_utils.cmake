@@ -257,8 +257,9 @@ function(mo2_deploy_qt)
 	# === End Qt6 Fix ===
 
 	if(NOT ${DEPLOY_NOPLUGINS})
+		set(qtwebengine_process_exe $<IF:$<CONFIG:Debug>,QtWebEngineProcessd.exe,QtWebEngineProcess.exe>)
 		install(CODE "
-			file(RENAME \"${bin}/dlls/QtWebEngineProcess.exe\" \"${bin}/QtWebEngineProcess.exe\")
+			file(RENAME \"${bin}/dlls/${qtwebengine_process_exe}\" \"${bin}/${qtwebengine_process_exe}\")
 			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
 			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/styles\")
 			file(RENAME \"${bin}/qtplugins/imageformats\" \"${bin}/dlls/imageformats\")
