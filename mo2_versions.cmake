@@ -22,7 +22,8 @@ endif()
 
 set(MO2_PYTHON_VERSION "3.12")
 
-set(MO2_PYQT_VERSION ${MO2_QT_VERSION})
+# TODO: there is no prebuilt for 6.7.3, so we stay on 6.7.1 for now
+set(MO2_PYQT_VERSION "6.7.1")
 set(MO2_SIP_VERSION "6.8.6")
 
 # mark as included
