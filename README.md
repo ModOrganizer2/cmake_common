@@ -1,94 +1,109 @@
 # MO2 CMake Common
 
-This repository contains CMake macro and functions that are used in most MO2
-repository to build uibase, modorganizer itself and plugins (C++/Python).
+This repository contains useful CMake macro and functions that are used to ease creating
+CMake configuration for most of MO2 repositories (e.g.,
+[uibase](https://github.com/ModOrganizer2/modorganizer-uibase),
+[plugin_python](https://github.com/ModOrganizer2/modorganizer-plugin_python) or
+[ModOrganizer2](https://github.com/ModOrganizer2/modorganizer) itself).
 
 ## Getting Started
 
-To get started, simply include the `mo2.cmake` file in your project:
+### 1. With VCPKG
 
-```cmake
-# this can safely be included multiple time
-include(path_to_cmake_common/mo2.cmake)
+Add [MO2 VCPKG registry](https://github.com/ModOrganizer2/vcpkg-registry) to your
+`vcpkg-configuration.json`:
+
+```json
+{
+  "default-registry": {
+    "kind": "git",
+    "repository": "https://github.com/Microsoft/vcpkg",
+    "baseline": "f61a294e765b257926ae9e9d85f96468a0af74e7"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/ModOrganizer2/vcpkg-registry",
+      "baseline": "27d8adbfe9e4ce88a875be3a45fadab69869eb60",
+      "packages": ["mo2-cmake"]
+    }
+  ]
+}
 ```
 
-This will set some (not too intrusive) variables and define many useful functions,
-all prefixed with `mo2_`.
-
-The basic MO2 plugin/executable CMake will then look like this:
+Add `mo2-cmake` to your VCPKG dependencies (`vcpkg.json`) and then import the utilities
+with `find_package` in your CMake configuration:
 
 ```cmake
-# this is for a C++ plugin
-add_library(my_plugin SHARED)
-
-# configure the plugin - this will also set the sources of the plugin
-# based on the file in the current directory (and subdirectory)
-mo2_configure_plugin(my_plugin)
-
-# install the target to MO2 installation path, typically in the
-# plugins/ folder
-mo2_install_target(my_plugin)
+find_package(mo2-cmake CONFIG REQUIRED)
 ```
 
-## Configuring
+### 2. Manually
 
-The main entry-points are the the configure functions:
+Clone this repository somewhere and then `include(mo2.cmake)` in your CMake
+configuration files.
 
-- C++
-  - `mo2_configure_target` - this is the "base" configuration,
-    which should not be used most of the time (this one is called by
-    other functions),
-  - `mo2_configure_uibase` - specific for uibase, should not be used
-    elsewhere,
-  - `mo2_configure_plugin` - configuration for a C++ plugin,
-  - `mo2_configure_library` - configuration for static or shared libraries,
-  - `mo2_configure_executable` - configuration for executables, including the main
-    MO2 executable,
-  - `mo2_configure_tests` - configuration for tests.
-- Python
-  - `mo2_configure_python`.
+## Usage
 
-The function are documented so you can look at the documentation to see what arguments
-are available.
+Be aware that using these utilities will automatically set some (not too intrusive)
+global variable on your project.
 
-### Dependencies
+In order to properly use this package, you should set `CMAKE_INSTALL_PREFIX` to a valid
+location.
+There are two possible way of using this package controlled by the `MO2_INSTALL_IS_BIN`
+option:
 
-You can add dependencies to the target by using the standard `target_link_libraries`,
-but this might be difficult when looking for MO2 dependencies, such as other libraries
-or Qt.
+- if `MO2_INSTALL_IS_BIN` is `OFF` (default), this assumes a layout with a `bin`,
+  `lib`, `include` and `pdb` folder under `CMAKE_INSTALL_PREFIX`,
+- if `MO2_INSTALL_IS_BIN` is `ON` (default when building standalone), this assumes
+  that `CMAKE_INSTALL_PREFIX` point directly to the equivalent `bin` folder.
 
-The `mo2_configure_XXX` accept `PRIVATE_DEPENDS` and `PUBLIC_DEPENDS` parameters that
-can be used to add dependencies to the target in an easier way.
-These parameters accept 3 types of dependencies:
+Importing the utilities will make the following variables available:
 
-- Qt dependencies, that should be specified as `Qt::COMPONENTS`, e.g., `Qt::Core` or
-  `Qt::Widgets`. Note that the `Qt::` is version-independent, MO2 will add the proper
-  version for you.
-- Boost dependencies - For header only libraries, you can simply pass `boost`, for
-  non-header only libraries, you can pass `boost::COMPONENT`, e.g., `boost::threads`.
-- MO2 dependencies - Those are either components available via the MO2 build system,
-  such as `zlib` or `libbsarch`, or other MO2 components such as `game_gamebryo`.
+- `MO2_QT_VERSION` - The Qt version used by MO2, as `major.minor.patch`.
+- `MO2_QT_MAJOR_VERSION`, `MO2_QT_MINOR_VERSION` and `MO2_QT_PATCH_VERSION` -
+  Respectively the major, minor and patch version of Qt used by MO2.
+- `MO2_PYTHON_VERSION` - The Python version used by MO2 as `major.minor` (patch version
+  should not be relevant).
 
-## Installing
+All functions are prefixed by `mo2_` and should not conflict with other existing
+functions.
 
-For C++ plugin, you need to call `mo2_install_target` to install the plugins or
-executable in MO2 installation directory.
-Where the target should be installed is defined in the `mo2_configure_XXX` function
-(which should be called before `mo2_install_target`).
+### Generic Utilities
 
-Installing Python plugins does not require extra call apart from `mo2_configure_python`.
+- `mo2_set_if_not_defined` - Set a variable to a given value if the variable is not
+  defined.
+- `mo2_add_subdirectories` -
+- `mo2_find_python_executable` - Find Python executable.
+- `mo2_find_git_hash` - Find the hash of the current git HEAD.
+- `mo2_find_qt_executable` - Find a given Qt executable.
+- `mo2_set_project_to_run_from_install` - Configure the debug executable for a VS project.
+- `mo2_add_filter` - Add a source group filter.
+- `mo2_deploy_qt_for_tests` - Deploy Qt DLLs, etc., for tests.
+- `mo2_deploy_qt` - Deploy Qt DLLs for ModOrganizer2.
+- `mo2_add_lupdate` - Create a target to run Qt `lupdate`.
+- `mo2_add_lrelease` - Create a target to Qt `lrelease`.
+- `mo2_add_translations` - Add targets to generate translations for the given target.
 
-## Examples
+### C++ Utilities
 
-All MO2 repositories use these functions, so you can look at any repository to get
-details on how to use them.
-Here are entry points for the various type of plugins:
+TODO:
 
-- [`game_skyrimse`](https://github.com/ModOrganizer2/modorganizer-game_skyrimSE/)
-  for a plugin that depends on a static library built by MO2.
-- [`game_gamebryo`](https://github.com/ModOrganizer2/modorganizer-game_gamebryo/)
-  for a static library example.
-- [`installer_wizard`](https://github.com/ModOrganizer2/modorganizer-installer_wizard)
-  for a Python plugin (module).
-- [`fnistool`](https://github.com/ModOrganizer2/modorganizer-fnistool/) for a Python
-  plugin (simple file).
+- `mo2_configure_warnings` - Utility function configure warnings for a target.
+- `mo2_configure_sources` - Glob and configure sources, including Qt-related files
+  (.ui, etc.) for a target.
+- `mo2_configure_msvc` - Set some MSVC-specific flag for a target.
+- (Deprecated) `mo2_configure_target` - Combine the above function + Extra stuff.
+- (Deprecated) `mo2_configure_plugin`
+- `mo2_configure_tests` - TO BE CHANGED
+- `mo2_install_plugin` - Install a plugin.
+
+### Python Utilities
+
+- `mo2_python_uifiles` - Add a target to generate `.py` files from `.ui` files.
+- `mo2_python_pip_install` - Install Python packages.
+- `mo2_python_requirements` - Install plugin requirements from a `plugin-requirements.txt`
+  file, ready to ship.
+- `mo2_configure_python_module` - Configure a Python module plugin.
+- (Deprecated) `mo2_configure_python_simple` - Configure a Python single file plugin.
+- `mo2_configure_python` - Wrapper for the two above functions.

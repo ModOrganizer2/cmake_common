@@ -18,24 +18,71 @@ function (mo2_set_if_not_defined NAME VALUE)
 	endif()
 endfunction()
 
+
+#! mo2_add_subdirectories : add all repositories matching the given list of patterns
+#
+# \param:FOLDER Folder (layout) to add the subdirectories to
+# \param:GLOB List of glob patterns to find repositories
+#
+function (mo2_add_subdirectories)
+	cmake_parse_arguments(MO2 "" "FOLDER" "GLOB" ${ARGN})
+
+    if (NOT DEFINED MO2_FOLDER)
+        message(FATAL_ERROR  "missing FOLDER in add_subdirectories")
+    endif()
+    if (NOT DEFINED MO2_GLOB)
+        message(FATAL_ERROR  "missing GLOB in add_subdirectories")
+    endif()
+
+    file(GLOB directories RELATIVE ${CMAKE_CURRENT_LIST_DIR} LIST_DIRECTORIES TRUE ${MO2_GLOB})
+
+    set(CMAKE_FOLDER ${MO2_FOLDER})
+    foreach(directory ${directories})
+        add_subdirectory(${directory})
+    endforeach()
+    unset(CMAKE_FOLDER)
+
+endfunction()
+
 #! mo2_find_python_executable : find the full path to the Python executable
 #
 # \param:VARNAME name of the variable that will contain the path to Python
 function(mo2_find_python_executable VARNAME)
-	if (EXISTS "${PYTHON_ROOT}/PCbuild/amd64/python_d.exe")
-		set(${VARNAME} "${PYTHON_ROOT}/PCbuild/amd64/python_d.exe" PARENT_SCOPE)
-	else()
-		set(${VARNAME} "${PYTHON_ROOT}/PCbuild/amd64/python.exe" PARENT_SCOPE)
+	if (NOT DEFINED Python_EXECUTABLE)
+		find_package(Python ${MO2_PYTHON_VERSION} COMPONENTS Interpreter REQUIRED)
 	endif()
+	set(${VARNAME} ${Python_EXECUTABLE} PARENT_SCOPE)
 endfunction()
 
-#! mo2_find_windeployqt_executable : find the full path to the windeployqt executable
+#! mo2_find_git_hash : find the git hash of HEAD on the current source project
 #
-# \param:VARNAME name of the variable that will contain the path to Python
-function(mo2_find_windeployqt_executable VARNAME)
-	# find_program() does not work for whatever reason, just going for the whole
-	# name
-	set(${VARNAME} ${QT_ROOT}/bin/windeployqt.exe PARENT_SCOPE)
+# \param:VARNAME variable to store the git hash
+function(mo2_find_git_hash VARNAME)
+	execute_process(
+	  COMMAND git log -1 --format=%h
+	  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	  OUTPUT_VARIABLE GIT_COMMIT_HASH
+	  OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	set(${VARNAME} ${GIT_COMMIT_HASH} PARENT_SCOPE)
+endfunction()
+
+#! mo2_find_qt_executable : find the path to the executable from Qt
+#
+function(mo2_find_qt_executable VARNAME EXECUTABLE)
+
+	# retrieve the absolute path to qmake and then use that path to find
+	# the windeployqt and macdeployqt binaries
+	get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
+	get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
+
+	# need to use a custom varname per executable to use the cache
+	find_program(QT_${EXECUTABLE} ${EXECUTABLE} HINTS "${_qt_bin_dir}")
+	if(WIN32 AND NOT QT_${EXECUTABLE})
+		message(FATAL_ERROR "${EXECUTABLE} not found")
+	endif()
+
+	set(${VARNAME} ${QT_${EXECUTABLE}} PARENT_SCOPE)
 endfunction()
 
 #! mo2_set_project_to_run_from_install : set a target to run from a given executable
@@ -101,27 +148,6 @@ function(mo2_add_filter)
 	source_group(${filter_name} FILES ${files})
 endfunction()
 
-#! mo2_find_qt_version : try to deduce Qt version from QT_ROOT variable
-#
-# this function caches the given variable
-#
-# \param:VAR name of the variable to store the version into
-#
-function(mo2_find_qt_version VAR)
-
-	if (DEFINED CACHE{${VAR}})
-		return()
-	endif()
-
-	# TODO: deduce version from the QT_ROOT folder
-	get_filename_component(VFOLDER ${QT_ROOT} DIRECTORY)
-	get_filename_component(${VAR} ${VFOLDER} NAME)
-
-	message(STATUS "deduced Qt version to ${${VAR}}")
-
-	set(${VAR} ${${VAR}} CACHE STRING "Qt Version}")
-endfunction()
-
 #! mo2_deploy_qt_for_tests : add comments to deploy Qt for tests
 #
 # unlike mo2_deploy_qt(), this function does not perform any cleaning
@@ -132,7 +158,7 @@ endfunction()
 function(mo2_deploy_qt_for_tests)
 	cmake_parse_arguments(DEPLOY "" "TARGET" "BINARIES" ${ARGN})
 
-	mo2_find_windeployqt_executable(windeployqt)
+	mo2_find_qt_executable(windeployqt windeployqt)
 
 	add_custom_command(TARGET "${DEPLOY_TARGET}"
 		POST_BUILD
@@ -155,12 +181,16 @@ endfunction()
 # this function attach install() entries that deploy Qt for the given binaries
 #
 # \param:NOPLUGINS do not deploy Qt plugins
+# \param:DIRECTORY directory, relative to CMAKE_INSTALL_PREFIX, to deploy to, default
+#   to ${MO2_INSTALL_BIN}
 # \param:BINARIES names of the binaries (in the install path) to deploy from
 #
 function(mo2_deploy_qt)
-	cmake_parse_arguments(DEPLOY "NOPLUGINS" "" "BINARIES" ${ARGN})
+	cmake_parse_arguments(DEPLOY "NOPLUGINS" "DIRECTORY" "BINARIES" ${ARGN})
 
-	mo2_find_windeployqt_executable(windeployqt)
+	mo2_set_if_not_defined(DEPLOY_DIRECTORY "${MO2_INSTALL_BIN}")
+
+	mo2_find_qt_executable(windeployqt windeployqt)
 
 	set(args
 		"--no-translations \
@@ -177,7 +207,7 @@ function(mo2_deploy_qt)
 		set(args "${args} --plugindir qtplugins")
 	endif()
 
-	set(bin "${CMAKE_INSTALL_PREFIX}/bin")
+	set(bin "${CMAKE_INSTALL_PREFIX}/${DEPLOY_DIRECTORY}")
 
 	set(deploys "")
 	foreach(binary ${DEPLOY_BINARIES})
@@ -227,8 +257,9 @@ function(mo2_deploy_qt)
 	# === End Qt6 Fix ===
 
 	if(NOT ${DEPLOY_NOPLUGINS})
+		set(qtwebengine_process_exe $<IF:$<CONFIG:Debug>,QtWebEngineProcessd.exe,QtWebEngineProcess.exe>)
 		install(CODE "
-			file(RENAME \"${bin}/dlls/QtWebEngineProcess.exe\" \"${bin}/QtWebEngineProcess.exe\")
+			file(RENAME \"${bin}/dlls/${qtwebengine_process_exe}\" \"${bin}/${qtwebengine_process_exe}\")
 			file(RENAME \"${bin}/qtplugins/platforms\" \"${bin}/platforms\")
 			file(RENAME \"${bin}/qtplugins/styles\" \"${bin}/styles\")
 			file(RENAME \"${bin}/qtplugins/imageformats\" \"${bin}/dlls/imageformats\")
@@ -287,21 +318,26 @@ function(mo2_add_lupdate TARGET)
 
 	message(TRACE "TS_FILE: ${MO2_TS_FILE}, SOURCES: ${MO2_SOURCES}, FILES: ${translation_files}")
 
+	add_custom_target("${TARGET}_lupdate" DEPENDS ${MO2_TS_FILE})
+
 	if (${is_cpp})
-		set(lupdate_command ${QT_ROOT}/bin/lupdate)
-		set(lupdate_args ${MO2_SOURCES} -ts ${MO2_TS_FILE})
+		mo2_find_qt_executable(lupdate lupdate)
+		set(lupdate_command ${lupdate} ${MO2_SOURCES} -ts ${MO2_TS_FILE})
 	else()
-		mo2_find_python_executable(PYTHON_EXE)
-		set(lupdate_command ${PYTHON_EXE})
-		set(lupdate_args -I -m PyQt${QT_MAJOR_VERSION}.lupdate.pylupdate --ts "${MO2_TS_FILE}" ${translation_files})
+		mo2_python_install_pyqt()
+		set(lupdate_command
+			${CMAKE_COMMAND}
+			-E env PYTHONPATH=${MO2_PYLIBS_DIR}
+			${MO2_PYLIBS_DIR}/bin/pylupdate${MO2_QT_VERSION_MAJOR}.exe
+			--ts "${MO2_TS_FILE}" ${translation_files})
+
+		add_dependencies("${TARGET}_lupdate" PyQt6)
 	endif()
 
 	add_custom_command(OUTPUT ${MO2_TS_FILE}
-		COMMAND ${lupdate_command} ARGS ${lupdate_args}
+		COMMAND ${lupdate_command}
 		DEPENDS ${translation_files}
 		VERBATIM)
-
-	add_custom_target("${TARGET}_lupdate" DEPENDS ${MO2_TS_FILE})
 
 	# we need to set this property otherwise there is an issue with C# projects
 	# requiring nuget packages (e.g., installer_omod) that tries to resolve Nuget
@@ -319,15 +355,21 @@ endfunction()
 # this function adds a ${TARGET}_lrelease target
 #
 # \param:TARGET target to generate releases for
-# \param:INSTALL if set, QM files will be installed to bin/translations
+# \param:INSTALL if set, QM files will be installed
+# \param:DIRECTORY if INSTALL is set, path where translations should be installed,
+#   default to ${MO2_INSTALL_BIN}/translations
 # \param:QM_FILE .qm file to generate
 # \param:TS_FILES source ts
 #
 function(mo2_add_lrelease TARGET)
-	cmake_parse_arguments(MO2 "INSTALL" "QM_FILE" "TS_FILES" ${ARGN})
+	cmake_parse_arguments(MO2 "INSTALL" "DIRECTORY;QM_FILE" "TS_FILES" ${ARGN})
+
+	mo2_set_if_not_defined(MO2_DIRECTORY "${MO2_INSTALL_BIN}/translations")
+
+	mo2_find_qt_executable(lrelease_command lrelease)
 
 	add_custom_command(OUTPUT ${MO2_QM_FILE}
-		COMMAND ${QT_ROOT}/bin/lrelease
+		COMMAND ${lrelease_command}
 		ARGS ${MO2_TS_FILES} -qm ${MO2_QM_FILE}
 		DEPENDS "${MO2_TS_FILES}"
 		VERBATIM)
@@ -344,7 +386,7 @@ function(mo2_add_lrelease TARGET)
 		FOLDER autogen)
 
 	if (${MO2_INSTALL})
-		install(FILES ${MO2_QM_FILE} DESTINATION bin/translations)
+		install(FILES ${MO2_QM_FILE} DESTINATION ${MO2_DIRECTORY})
 	endif()
 
 endfunction()
@@ -357,20 +399,17 @@ endfunction()
 # \param:TARGET target to generate translations for
 # \param:RELEASE if set, will use mo2_add_lrelease to generate .qm files
 # \param:INSTALL_RELEASE if true, will install generated .qm files (force RELEASE)
+# \param:INSTALL_DIRECTORY installation directory for .qm files, default to ${MO2_INSTALL_BIN}/translations
 # \param:TS_FILE intermediate .ts file to generate
 # \param:QM_FILE file .qm file to generate if RELEASE or INSTALL_RELEASE is set
 # \param:SOURCES source directories to look for translations, send to mo2_add_lupdate
 #
 function(mo2_add_translations TARGET)
-	cmake_parse_arguments(MO2 "RELEASE;INSTALL_RELEASE" "TS_FILE;QM_FILE" "SOURCES" ${ARGN})
+	cmake_parse_arguments(MO2 "RELEASE;INSTALL_RELEASE" "TS_FILE;QM_FILE;INSTALL_DIRECTORY" "SOURCES" ${ARGN})
 
-	if (NOT MO2_TS_FILE)
-		set(MO2_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}_en.ts)
-	endif()
-
-	if (NOT MO2_QM_FILE)
-		set(MO2_QM_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_en.qm)
-	endif()
+	mo2_set_if_not_defined(MO2_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}_en.ts)
+	mo2_set_if_not_defined(MO2_QM_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_en.qm)
+	mo2_set_if_not_defined(MO2_INSTALL_DIRECTORY "${MO2_INSTALL_BIN}/translations")
 
 	# force release with install
 	if (${MO2_INSTALL_RELEASE})
@@ -382,6 +421,7 @@ function(mo2_add_translations TARGET)
 	if (${MO2_RELEASE})
 		mo2_add_lrelease(${TARGET}
 			INSTALL ${MO2_INSTALL_RELEASE}
+			DIRECTORY ${MO2_INSTALL_DIRECTORY}
 			TS_FILES ${MO2_TS_FILE}
 			QM_FILE ${MO2_QM_FILE})
 

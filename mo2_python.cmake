@@ -2,6 +2,95 @@ cmake_minimum_required(VERSION 3.16)
 
 include(${CMAKE_CURRENT_LIST_DIR}/mo2_utils.cmake)
 
+set(MO2_PYLIBS_DIR "${CMAKE_BINARY_DIR}/pylibs" CACHE PATH
+    "default for path for Python libraries")
+
+#! mo2_python_pip_install : run "pip install ..."
+#
+# \param:TARGET target to install Python package for
+# \param:DIRECTORY directory to install libraries to, REQUIRED
+# \param:PACKAGES packages to install, REQUIRED, can contain version constraints, e.g.,
+#   "PyQt6==6.3.0"
+#
+function(mo2_python_pip_install TARGET)
+	cmake_parse_arguments(MO2
+		"NO_DEPENDENCIES;PRE_RELEASE;NO_FORCE;USE_CACHE" "DIRECTORY" "PACKAGES;EXTRA_INDEX_URLS" ${ARGN})
+
+	mo2_set_if_not_defined(MO2_DIRECTORY ${MO2_PYLIBS_DIR})
+	mo2_set_if_not_defined(MO2_NO_DEPENDENCIES OFF)
+	mo2_set_if_not_defined(MO2_PRE_RELEASE OFF)
+	mo2_set_if_not_defined(MO2_NO_FORCE OFF)
+	mo2_set_if_not_defined(MO2_USE_CACHE OFF)
+	mo2_set_if_not_defined(MO2_EXTRA_INDEX_URLS "")
+
+	set(pip_install_arguments "")
+
+	if (MO2_NO_DEPENDENCIES)
+		list(APPEND pip_install_arguments --no-deps)
+	endif()
+
+	if (MO2_PRE_RELEASE)
+		list(APPEND pip_install_arguments --pre)
+	endif()
+
+	if (NOT MO2_NO_FORCE)
+		list(APPEND pip_install_arguments --force)
+	endif()
+
+	if (NOT USE_CACHE)
+		list(APPEND pip_install_arguments --no-cache-dir)
+	endif()
+
+	foreach(_extra_index_url ${MO2_EXTRA_INDEX_URLS})
+		list(APPEND pip_install_arguments --extra-index-url ${_extra_index_url})
+	endforeach()
+
+	mo2_find_python_executable(PYTHON_EXE)
+
+	string(MAKE_C_IDENTIFIER "${MO2_PACKAGES}" PIP_FILE_LOG)
+	set(pip_log_file "${CMAKE_CURRENT_BINARY_DIR}/${PIP_FILE_LOG}.log")
+
+	add_custom_command(
+		OUTPUT "${pip_log_file}"
+		COMMAND ${PYTHON_EXE}
+				-I
+				-m pip
+				install
+				${pip_install_arguments}
+				--upgrade
+				--disable-pip-version-check
+				--isolated
+				--no-cache-dir
+				--target="${MO2_DIRECTORY}"
+				--log="${pip_log_file}"
+				${MO2_PACKAGES}
+	)
+
+	set(pip_target_name "${TARGET}_pip_${PIP_FILE_LOG}")
+
+	add_custom_target(${pip_target_name} ALL DEPENDS "${pip_log_file}")
+	set_target_properties(${pip_target_name} PROPERTIES FOLDER autogen)
+
+	add_dependencies(${TARGET} ${pip_target_name})
+endfunction()
+
+#! mo2_python_install_pyqt : install PyQt6 and create a PyQt6 target for it
+#
+# it is safe to call this function multiple times, PyQt6 will only be installed once
+#
+function(mo2_python_install_pyqt)
+	if (TARGET PyQt6)
+		return()
+	endif()
+
+	add_custom_target(PyQt6)
+	set_target_properties(PyQt6 PROPERTIES FOLDER autogen)
+	mo2_python_pip_install(PyQt6 NO_FORCE
+		PACKAGES
+			PyQt${MO2_QT_VERSION_MAJOR}==${MO2_PYQT_VERSION}
+			sip==${MO2_SIP_VERSION})
+endfunction()
+
 #! mo2_python_uifiles : create .py files from .ui files for a python target
 #
 # \param:TARGET target to generate .py files for
@@ -17,6 +106,7 @@ function(mo2_python_uifiles TARGET)
 	endif()
 
 	mo2_find_python_executable(PYTHON_EXE)
+	mo2_python_install_pyqt()
 
 	message(DEBUG "generating .py from ui files: ${MO2_FILES}")
 
@@ -32,12 +122,10 @@ function(mo2_python_uifiles TARGET)
 		set(output "${folder}/${name}.py")
 		add_custom_command(
 			OUTPUT "${output}"
-			COMMAND ${PYTHON_EXE}
-				-I
-				-m PyQt${QT_MAJOR_VERSION}.uic.pyuic
+			COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_BINARY_DIR}/pylibs
+				${MO2_PYLIBS_DIR}/bin/pyuic${MO2_QT_VERSION_MAJOR}.exe
 				-o "${output}"
 				"${UI_FILE}"
-			WORKING_DIRECTORY ${PYTHON_ROOT}
 			DEPENDS "${UI_FILE}"
 		)
 
@@ -54,100 +142,7 @@ function(mo2_python_uifiles TARGET)
 
 	add_dependencies(${TARGET} "${TARGET}_uic")
 
-endfunction()
-
-#! mo2_python_rcfiles : create .py files from .qrc files for a python target
-#
-# \param:TARGET target to generate .py files for
-# \param:INPLACE if specified, .py files are generated next to the .qrc files, useful
-#     for Python modules, otherwise files are generated in the binary directory
-# \param:FILES list of .qrc files to generate .py files from
-#
-function(mo2_python_rcfiles TARGET)
-	cmake_parse_arguments(MO2 "" "INPLACE" "FILES" ${ARGN})
-
-	if (NOT MO2_FILES)
-		return()
-	endif()
-
-	mo2_find_python_executable(PYTHON_EXE)
-
-	message(DEBUG "generating .py from qrc files: ${MO2_FILES}")
-
-	set(pyrc_files "")
-	foreach (RC_FILE ${MO2_FILES})
-		get_filename_component(name "${RC_FILE}" NAME_WLE)
-		get_filename_component(folder "${RC_FILE}" DIRECTORY)
-		if (${MO2_INPLACE})
-			get_filename_component(folder "${RC_FILE}" DIRECTORY)
-		else()
-			set(folder "${CMAKE_CURRENT_BINARY_DIR}")
-		endif()
-
-
-		set(output "${folder}/${name}_rc.py")
-		add_custom_command(
-			OUTPUT "${output}"
-			COMMAND ${PYTHON_EXE}
-				-I
-				-m PyQt5.pyrcc_main
-				-o "${output}"
-				"${RC_FILE}"
-			WORKING_DIRECTORY ${PYTHON_ROOT}
-			DEPENDS "${RC_FILE}"
-		)
-
-		list(APPEND pyrc_files "${output}")
-	endforeach()
-
-	if (${MO2_INPLACE})
-		source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}
-			PREFIX autogen FILES ${pyrc_files})
-	endif()
-
-	add_custom_target("${TARGET}_qrc" DEPENDS ${pyrc_files})
-	set_target_properties("${TARGET}_qrc" PROPERTIES FOLDER autogen)
-	add_dependencies(${TARGET} "${TARGET}_qrc")
-
-endfunction()
-
-#! mo2_python_pip_install : run "pip install ..."
-#
-# \param:TARGET target to install Python package for
-# \param:DIRECTORY directory to install libraries to, REQUIRED
-# \param:PACKAGES packages to install, REQUIRED, can contain version constraints, e.g.,
-#   "PyQt6==6.3.0"
-#
-function(mo2_python_pip_install TARGET)
-	cmake_parse_arguments(MO2 "" "DIRECTORY" "PACKAGES" ${ARGN})
-
-	if (NOT MO2_DIRECTORY)
-		message(FATAL_ERROR "must specified a DIRECTORY for pip install")
-	endif()
-
-	mo2_find_python_executable(PYTHON_EXE)
-
-	string(MAKE_C_IDENTIFIER "${MO2_PACKAGES}" PIP_FILE_LOG)
-	set(pip_log_file "${CMAKE_CURRENT_BINARY_DIR}/${PIP_FILE_LOG}.log")
-
-	add_custom_command(
-		OUTPUT "${pip_log_file}"
-		COMMAND ${PYTHON_EXE}
-				-I
-				-m pip
-				install --force --upgrade --disable-pip-version-check
-				--target="${MO2_DIRECTORY}"
-				--log="${pip_log_file}"
-				${MO2_PACKAGES}
-		WORKING_DIRECTORY ${PYTHON_ROOT}
-	)
-
-	set(pip_target_name "${TARGET}_pip_${PIP_FILE_LOG}")
-
-	add_custom_target(${pip_target_name} ALL DEPENDS "${pip_log_file}")
-	set_target_properties(${pip_target_name} PROPERTIES FOLDER autogen)
-
-	add_dependencies(${TARGET} ${pip_target_name})
+	add_dependencies("${TARGET}_uic" PyQt6)
 
 endfunction()
 
@@ -169,7 +164,6 @@ function(mo2_python_requirements TARGET)
 				--target="${MO2_LIBDIR}"
 				--log="${CMAKE_CURRENT_BINARY_DIR}/pip.log"
 				-r "${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
-		WORKING_DIRECTORY ${PYTHON_ROOT}
 		DEPENDS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt"
 	)
 	add_custom_target("${TARGET}_libs"
@@ -182,7 +176,7 @@ function(mo2_python_requirements TARGET)
 
 	install(
 		DIRECTORY "${MO2_LIBDIR}"
-		DESTINATION "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}/"
+		DESTINATION "${MO2_INSTALL_BIN}/plugins/${TARGET}/"
 		PATTERN "__pycache__" EXCLUDE
 	)
 
@@ -227,10 +221,6 @@ function(mo2_configure_python_module TARGET)
 	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	mo2_python_uifiles(${TARGET} INPLACE FILES ${ui_files})
 
-	# qrc file
-	file(GLOB_RECURSE qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
-	mo2_python_rcfiles(${TARGET} INPLACE FILES ${qrc_files})
-
     # install requirements if there are any
 	if(EXISTS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
 		mo2_python_requirements(${TARGET} LIBDIR "${lib_dir}")
@@ -241,7 +231,7 @@ function(mo2_configure_python_module TARGET)
 			FILES "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
 	endif()
 
-    set(install_dir "${MO2_INSTALL_PATH}/bin/plugins/${TARGET}")
+    set(install_dir "${MO2_INSTALL_BIN}/plugins/${TARGET}")
 
 	# directories that go in bin/plugins/${name}
 	install(
@@ -281,10 +271,6 @@ function(mo2_configure_python_simple TARGET)
 	file(GLOB ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	mo2_python_uifiles(${TARGET} FILES ${ui_files})
 
-	# qrc file
-	file(GLOB qrc_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.qrc)
-	mo2_python_rcfiles(${TARGET} FILES ${qrc_files})
-
 	# .py files directly in the directory
 	file(GLOB py_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.py)
 
@@ -305,7 +291,7 @@ function(mo2_configure_python_simple TARGET)
 		PREFIX data
 		FILES ${json_files})
 
-    set(install_dir "${MO2_INSTALL_PATH}/bin/plugins")
+    set(install_dir "${MO2_INSTALL_BIN}/plugins")
 
 	# .py files directly in src/ go to plugins/
 	install(FILES ${py_files} DESTINATION ${install_dir})
