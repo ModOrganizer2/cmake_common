@@ -184,11 +184,17 @@ function(mo2_configure_msvc TARGET)
 			/OPT:ICF
 		>)
 
-    if(${MO2_CLI})
+	if(${MO2_CLI})
 		set_target_properties(${TARGET} PROPERTIES COMMON_LANGUAGE_RUNTIME "")
-    endif()
+	endif()
 
-	set_target_properties(${TARGET} PROPERTIES VS_STARTUP_PROJECT ${TARGET})
+	get_property(CURRENT_STARTUP_PROJECT
+		DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT)
+
+	if (NOT CURRENT_STARTUP_PROJECT)
+		message(STATUS "MO2: Setting startup project to " ${TARGET} ".")
+		set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET})
+	endif()
 
 endfunction()
 
@@ -242,6 +248,7 @@ function(mo2_configure_target TARGET)
 
 	if(${MO2_TRANSLATIONS})
 		mo2_add_translations(${TARGET}
+		    INSTALL_RELEASE
 			SOURCES ${CMAKE_CURRENT_SOURCE_DIR} ${MO2_EXTRA_TRANSLATIONS})
 	endif()
 
@@ -326,7 +333,12 @@ endfunction()
 function(mo2_install_plugin TARGET)
 	cmake_parse_arguments(MO2 "FOLDER" "" "" ${ARGN})
 
-	install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/extensions/${MO2_EXTENSION_ID}/plugins)
+	if (${MO2_FOLDER})
+		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/plugins/$<TARGET_FILE_BASE_NAME:${TARGET}>)
+	else()
+		install(TARGETS ${TARGET} RUNTIME DESTINATION ${MO2_INSTALL_BIN}/plugins)
+	endif()
+
 	if (NOT MO2_INSTALL_IS_BIN)
 		install(TARGETS ${TARGET} ARCHIVE DESTINATION lib)
 		# install PDB if possible
