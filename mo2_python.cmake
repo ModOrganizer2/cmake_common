@@ -174,12 +174,6 @@ function(mo2_python_requirements TARGET)
 
 	file(MAKE_DIRECTORY "${MO2_LIBDIR}")
 
-	install(
-		DIRECTORY "${MO2_LIBDIR}"
-		DESTINATION "${MO2_INSTALL_BIN}/plugins/${TARGET}/"
-		PATTERN "__pycache__" EXCLUDE
-	)
-
 endfunction()
 
 #! mo2_configure_python_module : configure a Python plugin module
@@ -221,6 +215,8 @@ function(mo2_configure_python_module TARGET)
 	file(GLOB_RECURSE ui_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 	mo2_python_uifiles(${TARGET} INPLACE FILES ${ui_files})
 
+    set(install_dir "${MO2_INSTALL_BIN}/extensions/${MO2_EXTENSION_ID}")
+
     # install requirements if there are any
 	if(EXISTS "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
 		mo2_python_requirements(${TARGET} LIBDIR "${lib_dir}")
@@ -229,14 +225,18 @@ function(mo2_configure_python_module TARGET)
 		)
 		source_group(requirements
 			FILES "${PROJECT_SOURCE_DIR}/plugin-requirements.txt")
-	endif()
 
-    set(install_dir "${MO2_INSTALL_BIN}/plugins/${TARGET}")
+		install(
+			DIRECTORY "${MO2_LIBDIR}/"
+			DESTINATION "${install_dir}/lib/"
+			PATTERN "__pycache__" EXCLUDE
+		)
+	endif()
 
 	# directories that go in bin/plugins/${name}
 	install(
-		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
-		DESTINATION ${install_dir}
+		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/"
+		DESTINATION "${install_dir}/${TARGET}/"
 		FILES_MATCHING PATTERN "*.py"
 		PATTERN ".git" EXCLUDE
 		PATTERN ".github" EXCLUDE
@@ -247,8 +247,8 @@ function(mo2_configure_python_module TARGET)
 	# copy the resource directory if it exists
 	if(EXISTS "${res_dir}")
 		install(
-			DIRECTORY "${res_dir}"
-			DESTINATION ${install_dir}
+			DIRECTORY "${res_dir}/"
+			DESTINATION "${install_dir}/res/"
 		)
 	endif()
 
