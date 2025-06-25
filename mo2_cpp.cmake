@@ -149,7 +149,7 @@ function(mo2_configure_msvc TARGET)
 
 	cmake_parse_arguments(MO2 "" "PERMISSIVE;BIGOBJ;CLI" "" ${ARGN})
 
-	set(CXX_STANDARD 20)
+	set(CXX_STANDARD 23)
 	if (${MO2_CLI})
 		set(CXX_STANDARD 17)
 	endif()
@@ -264,14 +264,14 @@ endfunction()
 
 #! mo2_configure_tests : configure a target as a MO2 C++ tests
 #
-# this function creates a set of tests available in the ${TARET}_gtests variable
+# this function creates a set of tests available in the ${TARGET}_gtests variable
 #
 # extra arguments are given to mo2_configure_target, TRANSLATIONS and AUTOMOC are
 # OFF by default
 #
 function(mo2_configure_tests TARGET)
 	cmake_parse_arguments(MO2 "NO_MOCK;NO_MAIN" "" "" ${ARGN})
-	mo2_configure_target(${TARGET} TRANSLATIONS OFF AUTOMOC OFF ${ARGN})
+	mo2_configure_target(${TARGET} TRANSLATIONS OFF AUTOMOC OFF ${MO2_UNPARSED_ARGUMENTS})
 
 	find_package(GTest REQUIRED)
 	target_link_libraries(${TARGET} PRIVATE GTest::gtest)
