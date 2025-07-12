@@ -49,7 +49,7 @@ endfunction()
 # \param:VARNAME name of the variable that will contain the path to Python
 function(mo2_find_python_executable VARNAME)
 	if (NOT DEFINED Python_EXECUTABLE)
-		find_package(Python ${MO2_PYTHON_VERSION} COMPONENTS Interpreter REQUIRED)
+		find_package(Python ${MO2_PYTHON_VERSION} EXACT COMPONENTS Interpreter REQUIRED)
 	endif()
 	set(${VARNAME} ${Python_EXECUTABLE} PARENT_SCOPE)
 endfunction()
