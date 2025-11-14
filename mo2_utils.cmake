@@ -193,27 +193,30 @@ function(mo2_deploy_qt)
 	mo2_find_qt_executable(windeployqt windeployqt)
 
 	set(args
-		"--no-translations \
-		--verbose 0 \
-		--webenginewidgets \
-		--websockets \
-		--openglwidgets \
-		--libdir dlls \
-		--no-compiler-runtime")
+		--no-translations
+		--verbose 0
+		--webenginewidgets
+		--websockets
+		--networkauth
+		--openglwidgets
+		--libdir dlls
+		--no-compiler-runtime)
 
 	if(${DEPLOY_NOPLUGINS})
-		set(args "${args} --no-plugins")
+		list(APPEND args --no-plugins)
 	else()
-		set(args "${args} --plugindir qtplugins")
+		list(APPEND args --plugindir qtplugins)
 	endif()
+
+	string(REPLACE ";" " " deploy_qt_args "${args}")
 
 	set(bin "${CMAKE_INSTALL_PREFIX}/${DEPLOY_DIRECTORY}")
 
 	set(deploys "")
 	foreach(binary ${DEPLOY_BINARIES})
-		set(deploys "${deploys}
-			EXECUTE_PROCESS(
-				COMMAND ${windeployqt} ${args} ${binary}
+		string(APPEND deploys "
+			execute_process(
+				COMMAND \"${windeployqt}\" ${deploy_qt_args} \"${binary}\"
 				WORKING_DIRECTORY \"${bin}\")")
 	endforeach()
 
@@ -245,11 +248,11 @@ function(mo2_deploy_qt)
 
 	set(removals "")
 	foreach (qt6_qtquick_removal ${qt6_qtquick_to_remove})
-		set(removals "${removals}
+		string(APPEND removals "
 			file(REMOVE_RECURSE \"${bin}/QtQuick/${qt6_qtquick_removal}\")")
 	endforeach()
 	foreach (qt6_dll_removal ${qt6_qtdlls_to_remove})
-		set(removals "${removals}
+		string(APPEND removals "
 			file(REMOVE \"${bin}/dlls/Qt6${qt6_dll_removal}.dll\")")
 	endforeach()
 	install(CODE "${removals}")
