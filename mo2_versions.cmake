@@ -19,7 +19,7 @@ if (NOT DEFINED MO2_QT_VERSION)
 	if (Qt6_FOUND)
 		set(MO2_QT_VERSION "${Qt6_VERSION}")
 	else()
-		set(MO2_QT_VERSION "6.11.0")
+		set(MO2_QT_VERSION "6.11.1")
 	endif()
 endif()
 
@@ -31,7 +31,7 @@ unset(MO2_QT_VERSION_LIST)
 
 message(STATUS "[MO2] Qt version: ${MO2_QT_VERSION} (${MO2_QT_VERSION_MAJOR}, ${MO2_QT_VERSION_MINOR}, ${MO2_QT_VERSION_PATCH})")
 
-mo2_set_if_not_defined(MO2_PYTHON_VERSION "3.12")
+mo2_set_if_not_defined(MO2_PYTHON_VERSION "3.13")
 
 # TODO: there is no prebuilt for 6.7.3, so we stay on 6.7.1 for now
 if (MO2_QT_VERSION_MAJOR EQUAL 6 AND MO2_QT_VERSION_MINOR EQUAL 11)
